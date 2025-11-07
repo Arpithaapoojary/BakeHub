@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import User from "../models/user.model.js";
+
 
 const sign = (user) =>
   jwt.sign({ sub: user._id, role: user.role }, process.env.JWT_SECRET, {
@@ -47,5 +48,16 @@ export const login = async (req, res) => {
     res.json({ token, role: user.role, name: user.name });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+
+// 👑 Get all users (admin only)
+export const getAllUsers = async (_req, res) => {
+  try {
+    const users = await User.find().select("-password"); // don’t show passwords
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
