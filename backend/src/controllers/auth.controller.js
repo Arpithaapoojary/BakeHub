@@ -1,0 +1,51 @@
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+
+const sign = (user) =>
+  jwt.sign({ sub: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES,
+  });
+
+export const registerCustomer = async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    await User.create({ name, email, password, role: "customer" });
+    res.status(201).json({ message: "Customer registered" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const registerOwner = async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    await User.create({ name, email, password, role: "owner" });
+    res.status(201).json({ message: "Owner registered" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const registerAdmin = async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    await User.create({ name, email, password, role: "admin" });
+    res.status(201).json({ message: "Admin registered" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email }).select("+password");
+    if (!user || !(await user.compare(password)))
+      return res.status(400).json({ error: "Invalid credentials" });
+
+    const token = sign(user);
+    res.json({ token, role: user.role, name: user.name });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
