@@ -9,8 +9,7 @@ import menuRoutes from "./routes/menu.routes.js";
 
 import productRoutes from "./routes/product.routes.js";
 
-
-
+import orderRoutes from "./routes/order.routes.js";
 
 const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
@@ -37,7 +36,9 @@ app.get("/", (_req, res) => {
   `);
 });
 
-app.get("/api/health", (_req, res) => res.json({ ok: true, service: "BakeHub API" }));
+app.get("/api/health", (_req, res) =>
+  res.json({ ok: true, service: "BakeHub API" })
+);
 
 // mount routes (we’ll add them next)
 import authRoutes from "./routes/auth.routes.js";
@@ -48,10 +49,9 @@ app.use("/api/bakeries", bakeryRoutes);
 
 app.use("/api/menu", menuRoutes);
 
-
 app.use("/api/products", productRoutes);
 
-
+app.use("/api/orders", orderRoutes);
 
 const start = async () => {
   await connectDB();
