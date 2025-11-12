@@ -1,31 +1,26 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 
-// 🔒 Middleware: Check token validity
 export const requireAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer "))
+    return res.status(401).json({ error: "No token provided" });
+
+  const token = authHeader.split(" ")[1];
+
   try {
-    const header = req.headers.authorization || "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-
-    if (!token) return res.status(401).json({ error: "Unauthorized: No token" });
-
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(payload.sub);
-    if (!user) return res.status(401).json({ error: "Invalid user" });
-
-    req.user = user;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.sub).select("-password");
     next();
-  } catch (err) {
-    return res.status(401).json({ error: "Unauthorized" });
+  } catch (error) {
+    res.status(403).json({ error: "Invalid token" });
   }
 };
 
-// 🧭 Middleware: Restrict access by role
 export const allowRoles = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!roles.includes(req.user.role))
       return res.status(403).json({ error: "Forbidden: Access denied" });
-    }
     next();
   };
 };

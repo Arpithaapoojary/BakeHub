@@ -1,23 +1,22 @@
-import { Router } from "express";
+import express from "express";
 import {
   registerCustomer,
   registerOwner,
   registerAdmin,
   login,
-  getAllUsers
+  getAllUsers,
 } from "../controllers/auth.controller.js";
-
 import { requireAuth, allowRoles } from "../middleware/auth.js";
 
-const router = Router();
+const router = express.Router();
 
+// 👥 Public routes
 router.post("/register-customer", registerCustomer);
 router.post("/register-owner", registerOwner);
 router.post("/register-admin", registerAdmin);
 router.post("/login", login);
 
-
-// ✅ new route — only admin can view all users
+// 👑 Admin-only route
 router.get("/users", requireAuth, allowRoles("admin"), getAllUsers);
 
 export default router;

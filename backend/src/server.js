@@ -5,11 +5,14 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
 
-import menuRoutes from "./routes/menu.routes.js";
 
 import productRoutes from "./routes/product.routes.js";
 
 import orderRoutes from "./routes/order.routes.js";
+
+import menuRoutes from "./routes/menu.routes.js";
+
+
 
 const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
@@ -43,12 +46,12 @@ app.get("/api/health", (_req, res) =>
 // mount routes (we’ll add them next)
 import authRoutes from "./routes/auth.routes.js";
 import bakeryRoutes from "./routes/bakery.routes.js";
-
-app.use("/api/auth", authRoutes);
 app.use("/api/bakeries", bakeryRoutes);
 
-app.use("/api/menu", menuRoutes);
+app.use("/api/auth", authRoutes);
 
+
+app.use("/api/menu", menuRoutes);
 app.use("/api/products", productRoutes);
 
 app.use("/api/orders", orderRoutes);

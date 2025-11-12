@@ -1,44 +1,44 @@
 import Menu from "../models/menu.model.js";
+import Bakery from "../models/bakery.model.js";
 
-// ➕ Add menu item (Owner only)
-export const addMenuItem = async (req, res) => {
+// 🧁 Create a new menu item (only bakery owner)
+export const createMenuItem = async (req, res) => {
   try {
-    const { name, price, description, bakeryId } = req.body;
+    const ownerId = req.user._id;
+    const bakery = await Bakery.findOne({ ownerId });
 
-    if (!name || !price || !bakeryId) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+    if (!bakery)
+      return res
+        .status(404)
+        .json({ message: "No bakery found for this owner." });
+    if (bakery.status !== "approved")
+      return res.status(403).json({ message: "Bakery not approved yet." });
 
-    const newItem = await Menu.create({
-      name,
-      price,
-      description,
-      bakery: bakeryId,
+    const menuItem = await Menu.create({
+      bakeryId: bakery._id,
+      ...req.body,
     });
 
-    res.status(201).json({ message: "Menu item added successfully", newItem });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(201).json(menuItem);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
-// 📋 View all items for a bakery
-export const getMenuItems = async (req, res) => {
+// 📋 Get all menu items for the owner's bakery
+export const getOwnerMenu = async (req, res) => {
   try {
-    const { bakeryId } = req.params;
-    const items = await Menu.find({ bakery: bakeryId });
-    res.json(items);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    const ownerId = req.user._id;
+    const bakery = await Bakery.findOne({ ownerId });
 
-// 🗑️ Delete a menu item (Owner only)
-export const deleteMenuItem = async (req, res) => {
-  try {
-    await Menu.findByIdAndDelete(req.params.id);
-    res.json({ message: "Menu item deleted" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (!bakery)
+      return res
+        .status(404)
+        .json({ message: "No bakery found for this owner." });
+
+    const menu = await Menu.find({ bakeryId: bakery._id });
+    res.json(menu);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

@@ -1,18 +1,14 @@
 import express from "express";
 import { requireAuth, allowRoles } from "../middleware/auth.js";
 import {
-  addMenuItem,
-  getMenuItems,
-  deleteMenuItem,
+  createMenuItem,
+  getOwnerMenu,
 } from "../controllers/menu.controller.js";
 
 const router = express.Router();
 
-// Owner adds/deletes menu
-router.post("/", requireAuth, allowRoles("owner"), addMenuItem);
-router.delete("/:id", requireAuth, allowRoles("owner"), deleteMenuItem);
-
-// Everyone (customer/admin) can view bakery menu
-router.get("/:bakeryId", getMenuItems);
+// 🧁 Routes
+router.post("/", requireAuth, allowRoles("owner"), createMenuItem);
+router.get("/", requireAuth, allowRoles("owner"), getOwnerMenu);
 
 export default router;
