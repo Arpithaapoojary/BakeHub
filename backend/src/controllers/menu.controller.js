@@ -1,44 +1,50 @@
 import Menu from "../models/menu.model.js";
-import Bakery from "../models/bakery.model.js";
 
-// 🧁 Create a new menu item (only bakery owner)
-export const createMenuItem = async (req, res) => {
+// ✅ Get all menu items
+export const getMenuItems = async (req, res) => {
   try {
-    const ownerId = req.user._id;
-    const bakery = await Bakery.findOne({ ownerId });
-
-    if (!bakery)
-      return res
-        .status(404)
-        .json({ message: "No bakery found for this owner." });
-    if (bakery.status !== "approved")
-      return res.status(403).json({ message: "Bakery not approved yet." });
-
-    const menuItem = await Menu.create({
-      bakeryId: bakery._id,
-      ...req.body,
-    });
-
-    res.status(201).json(menuItem);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const menus = await Menu.find({ ownerId: req.user.sub });
+    res.json(menus);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// 📋 Get all menu items for the owner's bakery
-export const getOwnerMenu = async (req, res) => {
+// ✅ Create menu item
+export const createMenuItem = async (req, res) => {
   try {
-    const ownerId = req.user._id;
-    const bakery = await Bakery.findOne({ ownerId });
+    const item = await Menu.create({ ...req.body, ownerId: req.user.sub });
+    res.status(201).json(item);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
 
-    if (!bakery)
-      return res
-        .status(404)
-        .json({ message: "No bakery found for this owner." });
+// ✅ Update menu item
+export const updateMenuItem = async (req, res) => {
+  try {
+    const updated = await Menu.findOneAndUpdate(
+      { _id: req.params.id, ownerId: req.user.sub },
+      req.body,
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ error: "Item not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
-    const menu = await Menu.find({ bakeryId: bakery._id });
-    res.json(menu);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+// ✅ Delete menu item
+export const deleteMenuItem = async (req, res) => {
+  try {
+    const deleted = await Menu.findOneAndDelete({
+      _id: req.params.id,
+      ownerId: req.user.sub,
+    });
+    if (!deleted) return res.status(404).json({ error: "Item not found" });
+    res.json({ message: "Item deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };

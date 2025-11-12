@@ -14,6 +14,9 @@ import menuRoutes from "./routes/menu.routes.js";
 
 
 
+
+
+
 const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
 app.use(express.json());
@@ -38,6 +41,8 @@ app.get("/", (_req, res) => {
     </html>
   `);
 });
+
+
 
 app.get("/api/health", (_req, res) =>
   res.json({ ok: true, service: "BakeHub API" })
