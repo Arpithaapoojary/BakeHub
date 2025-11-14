@@ -7,29 +7,21 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    bakeryId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Bakery",
-      required: true,
-    },
     items: [
       {
-        productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
         name: String,
         price: Number,
-        quantity: { type: Number, default: 1 },
+        qty: Number,
       },
     ],
-    total: { type: Number, required: true },
+    total: Number,
     status: {
       type: String,
-      enum: ["Confirmed", "Ready", "Completed"],
-      default: "Confirmed",
+      enum: ["pending", "confirmed", "completed"],
+      default: "pending",
     },
-    pickupTime: { type: String },
   },
   { timestamps: true }
 );
 
-const Order = mongoose.model("Order", orderSchema);
-export default Order;
+export default mongoose.model("Order", orderSchema);

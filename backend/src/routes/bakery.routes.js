@@ -1,10 +1,25 @@
 import express from "express";
+import {
+  getApprovedBakeries,
+  getBakeryById,
+  registerBakery,
+  approveBakery,
+} from "../controllers/bakery.controller.js";
+
 import { requireAuth, allowRoles } from "../middleware/auth.js";
-import { getOwnerBakery } from "../controllers/bakery.controller.js";
 
 const router = express.Router();
 
-// ✅ Route to get bakery owned by logged-in owner
-router.get("/mine", requireAuth, allowRoles("owner"), getOwnerBakery);
+// Customer — browse approved bakeries
+router.get("/", getApprovedBakeries);
+
+// Customer — view specific bakery details
+router.get("/:id", getBakeryById);
+
+// Owner — register a new bakery
+router.post("/", requireAuth, allowRoles("owner"), registerBakery);
+
+// Admin — approve bakery
+router.put("/:id/approve", requireAuth, allowRoles("admin"), approveBakery);
 
 export default router;
