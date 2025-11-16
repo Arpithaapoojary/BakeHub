@@ -1,20 +1,14 @@
 import Bakery from "../models/bakery.model.js";
 
-// Get approved bakeries for customers
-export const getApprovedBakeries = async (_req, res) => {
+// ⭐ OWNER: Get bakery of logged-in owner
+export const getMyBakery = async (req, res) => {
   try {
-    const bakeries = await Bakery.find({ status: "approved" });
-    res.json(bakeries);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    const bakery = await Bakery.findOne({ ownerId: req.user.id });
 
-// Get a bakery by ID
-export const getBakeryById = async (req, res) => {
-  try {
-    const bakery = await Bakery.findById(req.params.id);
-    if (!bakery) return res.status(404).json({ message: "Bakery not found" });
+    if (!bakery)
+      return res
+        .status(404)
+        .json({ message: "No bakery found for this owner." });
 
     res.json(bakery);
   } catch (err) {
@@ -22,34 +16,25 @@ export const getBakeryById = async (req, res) => {
   }
 };
 
-// Owner registers bakery
-export const registerBakery = async (req, res) => {
+// ⭐ PUBLIC: Get ONLY approved bakeries (for customers)
+export const getApprovedBakeries = async (req, res) => {
   try {
-    const { name, address } = req.body;
-    const bakery = await Bakery.create({
-      name,
-      address,
-      ownerId: req.user.id,
-      status: "pending"
-    });
-    res.status(201).json(bakery);
+    const bakeries = await Bakery.find({ status: "approved" });
+
+    res.json(bakeries);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Admin approves bakery
-export const approveBakery = async (req, res) => {
+// ⭐ PUBLIC: Get bakery by ID
+export const getBakeryById = async (req, res) => {
   try {
-    const updated = await Bakery.findByIdAndUpdate(
-      req.params.id,
-      { status: "approved" },
-      { new: true }
-    );
+    const bakery = await Bakery.findById(req.params.id);
 
-    if (!updated) return res.status(404).json({ message: "Bakery not found" });
+    if (!bakery) return res.status(404).json({ message: "Bakery not found" });
 
-    res.json(updated);
+    res.json(bakery);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
