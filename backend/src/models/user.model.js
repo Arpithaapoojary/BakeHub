@@ -6,7 +6,11 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true, select: false },
-    role: { type: String, enum: ["customer", "owner", "admin"], default: "customer" },
+    role: {
+      type: String,
+      enum: ["customer", "owner", "admin"],
+      default: "customer",
+    },
   },
   { timestamps: true }
 );
@@ -18,10 +22,9 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// 🔑 Compare entered password with hashed password
-userSchema.methods.compare = async function (enteredPassword) {
-  return bcrypt.compare(enteredPassword, this.password);
+// 🔑 Corrected method
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
-const User = mongoose.model("User", userSchema);
-export default User;
+export default mongoose.model("User", userSchema);

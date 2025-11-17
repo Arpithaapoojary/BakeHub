@@ -8,10 +8,13 @@ import {
 
 const router = express.Router();
 
+// Owner: Get logged-in owner's bakery
 router.get("/mine", requireAuth, allowRoles("owner"), getMyBakery);
 
+// Public: Get approved bakeries
 router.get("/", getApprovedBakeries);
 
+// Public: Get bakery by ID
 router.get("/:id", getBakeryById);
 
 export default router;

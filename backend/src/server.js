@@ -11,6 +11,7 @@ import productRoutes from "./routes/product.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import menuRoutes from "./routes/menu.routes.js";
 import bakeryRoutes from "./routes/bakery.routes.js";
+import analyticsRoutes from "./routes/analytics.routes.js";
 
 const app = express();
 
@@ -56,6 +57,9 @@ app.use("/api/bakeries", bakeryRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
+
+app.use("/api/analytics", analyticsRoutes);
+
 
 // 🚀 Start server
 const start = async () => {
