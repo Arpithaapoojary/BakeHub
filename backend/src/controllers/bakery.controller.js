@@ -6,7 +6,9 @@ export const getMyBakery = async (req, res) => {
     const bakery = await Bakery.findOne({ ownerId: req.user.id });
 
     if (!bakery) {
-      return res.status(404).json({ message: "No bakery found for this owner." });
+      return res
+        .status(404)
+        .json({ message: "No bakery found for this owner." });
     }
 
     res.json(bakery);
@@ -15,10 +17,10 @@ export const getMyBakery = async (req, res) => {
   }
 };
 
-// PUBLIC: Get ONLY approved bakeries
-export const getApprovedBakeries = async (req, res) => {
+// ADMIN: Get all bakeries (pending + approved + rejected)
+export const getAllBakeries = async (req, res) => {
   try {
-    const bakeries = await Bakery.find({ status: "approved" });
+    const bakeries = await Bakery.find().populate("ownerId", "name email");
     res.json(bakeries);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -33,6 +35,35 @@ export const getBakeryById = async (req, res) => {
     if (!bakery) {
       return res.status(404).json({ message: "Bakery not found" });
     }
+
+    res.json(bakery);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ADMIN: Approve bakery
+export const approveBakery = async (req, res) => {
+  try {
+    const bakery = await Bakery.findByIdAndUpdate(
+      req.params.id,
+      { status: "approved" },
+      { new: true }
+    );
+    res.json(bakery);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ADMIN: Reject bakery
+export const rejectBakery = async (req, res) => {
+  try {
+    const bakery = await Bakery.findByIdAndUpdate(
+      req.params.id,
+      { status: "rejected" },
+      { new: true }
+    );
 
     res.json(bakery);
   } catch (err) {

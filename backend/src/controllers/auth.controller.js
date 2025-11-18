@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import PasswordResetToken from "../models/passwordResetToken.model.js";
 import { sendMail } from "../utils/mailer.js";
+import Bakery from "../models/bakery.model.js";
 
 // ------------------ REGISTER CUSTOMER ------------------
 export const registerCustomer = async (req, res) => {
@@ -40,7 +41,18 @@ export const registerOwner = async (req, res) => {
       role: "owner",
     });
 
-    res.json({ message: "Owner registered successfully", user });
+    // ⭐ Auto-create bakery request
+    await Bakery.create({
+      name: `${name}'s Bakery`,
+      address: "Not provided",
+      ownerId: user._id,
+      status: "pending",
+    });
+
+    res.json({
+      message: "Owner registered. Bakery approval request created.",
+      user,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -88,6 +100,13 @@ export const login = async (req, res) => {
       message: "Login success",
       token,
       role: user.role,
+      name: user.name,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

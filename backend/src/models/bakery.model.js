@@ -10,6 +10,11 @@ const bakerySchema = new mongoose.Schema(
       enum: ["pending", "approved"],
       default: "pending",
     },
+    imageUrl: {
+      type: String,
+      default:
+        "https://images.unsplash.com/photo-1542831371-d531d36971e6?auto=format&fit=crop&w=800&q=80",
+    },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

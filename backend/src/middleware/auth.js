@@ -15,7 +15,8 @@ export const auth = async (req, res, next) => {
     token = token.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = await User.findById(decoded.sub).select("_id role name email");
+    // 🔥 FIXED: Use decoded.id (NOT decoded.sub)
+    req.user = await User.findById(decoded.id).select("_id role name email");
 
     if (!req.user) {
       return res.status(401).json({ error: "User not found" });
