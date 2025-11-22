@@ -6,9 +6,13 @@ import {
   getAllBakeries,
   approveBakery,
   rejectBakery,
+  getApprovedBakeries,   // ✅ ADD THIS
 } from "../controllers/bakery.controller.js";
 
 const router = express.Router();
+
+// ⭐ PUBLIC: Get only approved bakeries (CUSTOMER)
+router.get("/public", getApprovedBakeries);   // ✅ ADD THIS
 
 // Owner: Get logged-in owner's bakery
 router.get("/mine", requireAuth, allowRoles("owner"), getMyBakery);

@@ -10,14 +10,13 @@ import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import OwnerDashboard from "./pages/owner/OwnerDashboard";
 import CustomerBrowse from "./pages/customer/CustomerBrowse";
-import OwnerMenu from "./pages/owner/OwnerMenu";
+
 import CustomerMenu from "./pages/customer/CustomerMenu";
 import CartPage from "./pages/customer/CartPage";
 import CheckoutPage from "./pages/customer/CheckoutPage";
 import OrderSuccess from "./pages/customer/OrderSuccess";
 import MyOrders from "./pages/customer/MyOrders";
-import OwnerOrders from "./pages/owner/OwnerOrders";
-import Analytics from "./pages/owner/Analytics";
+
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Register from "./pages/Register";
@@ -61,9 +60,6 @@ export default function App() {
 
               {/* Owner */}
               <Route path="/owner" element={<OwnerDashboard />} />
-              <Route path="/owner/menu" element={<OwnerMenu />} />
-              <Route path="/owner/orders" element={<OwnerOrders />} />
-              <Route path="/owner/analytics" element={<Analytics />} />
 
               {/* Admin */}
               <Route path="/admin" element={<AdminDashboard />} />

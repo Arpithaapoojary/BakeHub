@@ -56,6 +56,16 @@ export const approveBakery = async (req, res) => {
   }
 };
 
+// PUBLIC: Get ONLY approved bakeries for customers
+export const getApprovedBakeries = async (req, res) => {
+  try {
+    const bakeries = await Bakery.find({ status: "approved" });
+    res.json(bakeries);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch approved bakeries" });
+  }
+};
+
 // ADMIN: Reject bakery
 export const rejectBakery = async (req, res) => {
   try {
