@@ -7,14 +7,49 @@ const productSchema = new mongoose.Schema(
       ref: "Bakery",
       required: true,
     },
-    name: { type: String, required: true },
-    description: { type: String },
-    price: { type: Number, required: true },
-    isSoldOut: { type: Boolean, default: false },
-    image: { type: String }, // optional: URL for image
+
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    price: {
+      type: Number,
+      required: true,
+    },
+
+    imageUrl: {
+      type: String,
+      default: "",
+    },
+
+    isSoldOut: {
+      type: Boolean,
+      default: false,
+    },
+
+    // ⭐ NEW FIELD – required for category filtering
+    category: {
+      type: String,
+      default: "Uncategorized",
+      enum: [
+        "Cakes",
+        "Pastries",
+        "Breads",
+        "Cookies",
+        "Snacks",
+        "Beverages",
+        "Uncategorized",
+      ],
+    },
   },
   { timestamps: true }
 );
 
-const Product = mongoose.model("Product", productSchema);
-export default Product;
+export default mongoose.model("Product", productSchema);

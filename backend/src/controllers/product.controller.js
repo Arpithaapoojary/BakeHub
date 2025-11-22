@@ -1,53 +1,73 @@
 import Product from "../models/product.model.js";
 
-// 🧁 Create Product (Owner Only)
+// CREATE PRODUCT
 export const createProduct = async (req, res) => {
   try {
-    const { bakeryId, name, description, price, image } = req.body;
+    const {
+      bakeryId,
+      name,
+      description,
+      price,
+      imageUrl,
+      isSoldOut,
+      category,
+    } = req.body;
+
     const product = await Product.create({
       bakeryId,
       name,
       description,
       price,
-      image,
+      imageUrl,
+      isSoldOut,
+      category, // ⭐ ADDED
     });
-    res.status(201).json({ message: "Product added successfully", product });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create product" });
   }
 };
 
-// 🍰 Get Products by Bakery
+// GET PRODUCTS BY BAKERY
 export const getProductsByBakery = async (req, res) => {
   try {
     const { bakeryId } = req.params;
     const products = await Product.find({ bakeryId });
     res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch products" });
   }
 };
 
-// 🔄 Update Product
+// UPDATE PRODUCT
 export const updateProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    const updated = await Product.findByIdAndUpdate(id, req.body, {
+    const updates = {
+      name: req.body.name,
+      description: req.body.description,
+      price: req.body.price,
+      imageUrl: req.body.imageUrl,
+      isSoldOut: req.body.isSoldOut,
+      category: req.body.category || "Uncategorized", // ⭐ ADDED
+    };
+
+    const product = await Product.findByIdAndUpdate(req.params.id, updates, {
       new: true,
     });
-    res.json({ message: "Product updated", product: updated });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update product" });
   }
 };
 
-// ❌ Delete Product
+// DELETE PRODUCT
 export const deleteProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    await Product.findByIdAndDelete(id);
-    res.json({ message: "Product deleted" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete product" });
   }
 };
