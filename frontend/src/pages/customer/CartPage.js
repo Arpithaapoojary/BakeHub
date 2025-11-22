@@ -6,10 +6,14 @@ export default function CartPage() {
   const { cart, increaseQty, decreaseQty, removeFromCart } = useCart();
   const navigate = useNavigate();
 
-  const totalPrice = cart.reduce(
+  // Calculate totals
+  const subtotal = cart.reduce(
     (sum, item) => sum + item.price * (item.qty || 1),
     0
   );
+  const deliveryCharge = subtotal > 300 ? 0 : 30;
+  const tax = Math.round(subtotal * 0.05);
+  const grandTotal = subtotal + deliveryCharge + tax;
 
   // If cart empty
   if (!cart || cart.length === 0) {
@@ -28,69 +32,103 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-10">
-      <h1 className="text-3xl font-bold text-pink-600 mb-6">🛒 Your Cart</h1>
+    <div className="max-w-6xl mx-auto p-6 md:p-10 grid md:grid-cols-3 gap-10">
+      {/* ---------------- LEFT SIDE: CART ITEMS ---------------- */}
+      <div className="md:col-span-2">
+        <h1 className="text-3xl font-bold text-pink-600 mb-6">🛒 Your Cart</h1>
 
-      {/* Cart Items */}
-      <div className="space-y-4">
-        {cart.map((item) => (
-          <div
-            key={item._id}
-            className="bg-white p-5 rounded-2xl shadow-md flex items-center justify-between border border-pink-100"
-          >
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">
-                {item.name}
-              </h2>
-              <p className="text-gray-500">₹{item.price}</p>
-            </div>
+        <div className="space-y-5">
+          {cart.map((item) => (
+            <div
+              key={item._id}
+              className="bg-white p-5 rounded-2xl shadow-lg flex gap-5 border border-pink-100 hover:shadow-xl transition"
+            >
+              {/* IMAGE */}
+              <img
+                src={item.imageUrl || "https://via.placeholder.com/120"}
+                alt={item.name}
+                className="w-24 h-24 rounded-xl object-cover border"
+              />
 
-            {/* Qty Controls */}
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => decreaseQty(item._id)}
-                className="bg-pink-200 text-pink-800 px-3 py-1 rounded-lg font-bold"
-              >
-                -
-              </button>
+              {/* DETAILS */}
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {item.name}
+                  </h2>
+                  <p className="text-gray-500">₹{item.price}</p>
+                </div>
 
-              <div className="font-semibold">{item.qty || 1}</div>
+                {/* Qty Controls */}
+                <div className="flex items-center gap-3 mt-3">
+                  <button
+                    onClick={() => decreaseQty(item._id)}
+                    className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-bold text-xl"
+                  >
+                    -
+                  </button>
 
-              <button
-                onClick={() => increaseQty(item._id)}
-                className="bg-pink-500 text-white px-3 py-1 rounded-lg font-bold"
-              >
-                +
-              </button>
-            </div>
+                  <span className="text-lg font-semibold">{item.qty || 1}</span>
 
-            {/* Item Total + Remove */}
-            <div className="flex items-center gap-6">
-              <div className="text-gray-800 font-semibold">
-                ₹{(item.price * (item.qty || 1)).toFixed(2)}
+                  <button
+                    onClick={() => increaseQty(item._id)}
+                    className="bg-pink-500 text-white px-3 py-1 rounded-full font-bold text-xl"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => removeFromCart(item._id)}
-                className="text-red-500 hover:underline font-medium"
-              >
-                Remove
-              </button>
+
+              {/* PRICE + REMOVE */}
+              <div className="flex flex-col justify-between text-right">
+                <p className="text-lg font-bold text-gray-800">
+                  ₹{(item.price * (item.qty || 1)).toFixed(2)}
+                </p>
+
+                <button
+                  className="text-red-500 text-sm hover:underline"
+                  onClick={() => removeFromCart(item._id)}
+                >
+                  Remove
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Cart Summary */}
-      <div className="mt-6 bg-pink-50 p-6 rounded-2xl border border-pink-100 shadow-md">
-        <div className="text-xl font-bold text-gray-800 mb-4">
-          Total: ₹{totalPrice.toFixed(2)}
+      {/* ---------------- RIGHT SIDE: BILLING SECTION ---------------- */}
+      <div className="bg-white shadow-xl rounded-2xl p-6 border border-pink-100 sticky top-5 h-fit">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Bill Summary</h2>
+
+        <div className="space-y-3 text-gray-700">
+          <div className="flex justify-between text-lg">
+            <span>Subtotal</span>
+            <span>₹{subtotal}</span>
+          </div>
+
+          <div className="flex justify-between text-lg">
+            <span>Delivery Charge</span>
+            <span>{deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge}`}</span>
+          </div>
+
+          <div className="flex justify-between text-lg">
+            <span>GST (5%)</span>
+            <span>₹{tax}</span>
+          </div>
+
+          <hr className="my-3" />
+
+          <div className="flex justify-between text-2xl font-bold text-gray-900">
+            <span>Total</span>
+            <span className="text-pink-600">₹{grandTotal}</span>
+          </div>
         </div>
 
-        {/* Checkout BTN FIXED */}
         <button
           onClick={() => navigate("/checkout")}
-          className="w-full bg-pink-600 text-white py-3 rounded-xl text-lg font-semibold 
-                     hover:bg-pink-700 transition shadow"
+          className="mt-6 w-full py-3 rounded-xl bg-gradient-to-r from-pink-600 to-pink-500 text-white 
+                     text-lg font-semibold shadow-lg hover:shadow-xl transition"
         >
           Proceed to Checkout →
         </button>
