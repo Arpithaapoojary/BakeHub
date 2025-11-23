@@ -21,16 +21,3 @@ export async function sendMail({ to, subject, html, text }) {
   return info;
 }
 
-// TEMP TEST – remove after testing
-(async () => {
-  try {
-    await sendMail({
-      to: "bakehub.mailer@gmail.com", // your own email
-      subject: "Brevo SMTP Test",
-      html: "<h1>SMTP test from BakeHub</h1>",
-    });
-    console.log("TEST EMAIL SENT");
-  } catch (err) {
-    console.error("TEST EMAIL ERROR:", err);
-  }
-})();

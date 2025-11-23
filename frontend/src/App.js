@@ -16,6 +16,7 @@ import CartPage from "./pages/customer/CartPage";
 import CheckoutPage from "./pages/customer/CheckoutPage";
 import OrderSuccess from "./pages/customer/OrderSuccess";
 import MyOrders from "./pages/customer/MyOrders";
+import OrderTracking from "./pages/customer/OrderTracking";
 
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -57,6 +58,7 @@ export default function App() {
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/success" element={<OrderSuccess />} />
               <Route path="/orders" element={<MyOrders />} />
+              <Route path="/track/:orderId" element={<OrderTracking />} />
 
               {/* Owner */}
               <Route path="/owner" element={<OwnerDashboard />} />
