@@ -1,73 +1,101 @@
 export default function About() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-pink-50 pt-24 px-6 pb-16">
-      {/* Title */}
-      <h1 className="text-4xl md:text-5xl font-bold text-center text-pink-600 mb-6">
+    <div className="min-h-screen bg-gradient-to-b from-white to-pink-50 pt-24 px-6 pb-20">
+      {/* MAIN TITLE */}
+      <h1 className="text-3xl md:text-4xl font-bold text-center text-pink-600 mb-4 tracking-tight animate-fadeIn">
         About BakeHub
       </h1>
 
-      {/* Intro */}
-      <p className="text-gray-700 text-lg md:text-xl max-w-3xl mx-auto text-center mb-12">
-        BakeHub is a modern platform connecting bakery lovers with the finest
-        bakeries, while also empowering bakery owners with tools to manage
-        orders, menus, and business growth.
+      {/* SUB TEXT */}
+      <p className="text-gray-600 text-base md:text-lg max-w-3xl mx-auto text-center leading-relaxed mb-12 animate-fadeIn delay-200">
+        BakeHub is a modern digital platform designed to connect customers with
+        local bakeries. Whether you're craving fresh pastries, cakes, cookies,
+        or handmade desserts, BakeHub helps you discover nearby bakeries and
+        order with ease.
       </p>
 
-      {/* Mission Section */}
-      <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 items-center">
-        <img
-          src="https://images.unsplash.com/photo-1509440159598-7bb11b5e07c0"
-          alt="bakery"
-          className="rounded-2xl shadow-lg"
-        />
-
-        <div>
-          <h2 className="text-3xl font-semibold text-pink-600 mb-4">
-            Our Mission
-          </h2>
-          <p className="text-gray-700 text-lg leading-relaxed">
-            We aim to bring simplicity, creativity and technology together—
-            making dessert ordering effortless for customers and giving bakery
-            owners a platform to showcase their passion and grow their business.
-            BakeHub helps transform local bakeries into digital powerhouses.
-          </p>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className="mt-20 max-w-6xl mx-auto">
-        <h2 className="text-3xl font-semibold text-center text-pink-600 mb-10">
-          What We Offer
+      {/* SECTION 1 — OUR MISSION */}
+      <div
+        className="max-w-5xl mx-auto bg-white border border-pink-100 rounded-2xl p-8 
+                      shadow-md mb-12 animate-slideUp"
+      >
+        <h2 className="text-2xl font-semibold text-pink-600 mb-3">
+          Our Mission
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-10">
-          <div className="bg-white p-8 rounded-2xl shadow hover:shadow-lg transition">
-            <h3 className="text-xl font-semibold text-pink-600 mb-3">
-              🎂 For Customers
-            </h3>
-            <p className="text-gray-700">
-              Explore bakeries, browse menus, add to cart, order, and enjoy!
-            </p>
-          </div>
+        <p className="text-gray-700 text-base md:text-lg leading-relaxed">
+          Our mission is to empower local bakeries by giving them a beautiful
+          online presence, helping them reach more customers, and simplifying
+          their daily operations. At the same time, we ensure customers have a
+          smooth experience exploring menus, placing orders, and enjoying their
+          favourite treats.
+        </p>
+      </div>
 
-          <div className="bg-white p-8 rounded-2xl shadow hover:shadow-lg transition">
-            <h3 className="text-xl font-semibold text-pink-600 mb-3">
-              🧁 For Bakery Owners
-            </h3>
-            <p className="text-gray-700">
-              Manage products, orders, analytics and grow your business online.
-            </p>
-          </div>
+      {/* SECTION 2 — WHAT WE DO */}
+      <div
+        className="max-w-5xl mx-auto bg-white border border-pink-100 rounded-2xl p-8 
+                      shadow-md mb-12 animate-slideUp delay-200"
+      >
+        <h2 className="text-2xl font-semibold text-pink-600 mb-4">
+          What We Do
+        </h2>
 
-          <div className="bg-white p-8 rounded-2xl shadow hover:shadow-lg transition">
-            <h3 className="text-xl font-semibold text-pink-600 mb-3">
-              ⚙️ Seamless Technology
-            </h3>
-            <p className="text-gray-700">
-              Smooth UI, clean dashboard, secure logins and real-time updates.
-            </p>
-          </div>
-        </div>
+        <ul className="space-y-3 text-gray-700 text-base md:text-lg leading-relaxed">
+          <li>
+            • Help customers browse nearby bakeries without needing an account.
+          </li>
+          <li>• Provide bakery owners with easy product management tools.</li>
+          <li>
+            • Offer a streamlined ordering system for both customers and owners.
+          </li>
+          <li>
+            • Ensure real-time updates on order status and bakery availability.
+          </li>
+          <li>• Deliver a beautiful, fast, and mobile-friendly experience.</li>
+        </ul>
+      </div>
+
+      {/* SECTION 3 — WHY BAKEHUB */}
+      <div
+        className="max-w-5xl mx-auto bg-white border border-pink-100 rounded-2xl p-8 
+                      shadow-md mb-12 animate-slideUp delay-300"
+      >
+        <h2 className="text-2xl font-semibold text-pink-600 mb-3">
+          Why BakeHub?
+        </h2>
+
+        <p className="text-gray-700 text-base md:text-lg leading-relaxed">
+          BakeHub focuses on simplicity, reliability, and user satisfaction. We
+          believe that technology should make life easier — not complicated. Our
+          platform combines clean design, smooth performance, and
+          bakery-specific features that create the perfect digital experience
+          for everyone.
+        </p>
+
+        <p className="text-gray-700 text-base md:text-lg leading-relaxed mt-3">
+          Whether you're a customer exploring new desserts or a bakery owner
+          expanding your business, BakeHub provides everything you need in a
+          single, beautiful, and easy-to-use platform.
+        </p>
+      </div>
+
+      {/* SECTION 4 — OUR VALUES */}
+      <div
+        className="max-w-5xl mx-auto bg-white border border-pink-100 rounded-2xl p-8 
+                      shadow-md animate-slideUp delay-400"
+      >
+        <h2 className="text-2xl font-semibold text-pink-600 mb-4">
+          Our Values
+        </h2>
+
+        <ul className="space-y-3 text-gray-700 text-base md:text-lg leading-relaxed">
+          <li>✨ Customer Convenience First</li>
+          <li>✨ Support for Local Businesses</li>
+          <li>✨ Professional, Clean, and Trustworthy Design</li>
+          <li>✨ Smooth and Fast Performance</li>
+          <li>✨ User-friendly experience for all</li>
+        </ul>
       </div>
     </div>
   );

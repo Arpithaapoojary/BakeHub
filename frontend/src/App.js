@@ -12,6 +12,9 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import OwnerDashboard from "./pages/owner/OwnerDashboard";
 import CustomerBrowse from "./pages/customer/CustomerBrowse";
 
+import Profile from "./pages/customer/Profile";
+import Settings from "./pages/customer/Settings";
+
 import CustomerMenu from "./pages/customer/CustomerMenu";
 import CartPage from "./pages/customer/CartPage";
 import CheckoutPage from "./pages/customer/CheckoutPage";
@@ -43,6 +46,8 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
 
               <Route
                 path="/reset-password/:token"

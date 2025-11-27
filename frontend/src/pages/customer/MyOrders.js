@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Clock, CheckCircle, Truck } from "lucide-react";
+import {
+  Clock,
+  CheckCircle,
+  Truck,
+  Package,
+  ChevronRight,
+  RefreshCcw,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -19,7 +25,6 @@ export default function MyOrders() {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
         setOrders(res.data);
       } catch (err) {
         console.error("Error fetching orders:", err);
@@ -31,139 +36,174 @@ export default function MyOrders() {
     fetchOrders();
   }, [token]);
 
+  // ---------------- LOADING ----------------
   if (loading)
     return (
-      <div className="flex justify-center items-center h-screen text-pink-600">
-        Loading your orders...
+      <div className="flex justify-center items-center h-screen text-pink-600 text-xl">
+        Loading orders...
       </div>
     );
 
+  // ---------------- EMPTY ----------------
   if (!orders.length)
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-center p-5 bg-[#FFF5FA]">
-        <div className="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
-          <Clock className="text-pink-500" size={32} />
+      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-50 to-white text-center px-6">
+        <div className="bg-white p-10 rounded-3xl shadow-xl border border-pink-200 animate-fadeIn">
+          <Package className="w-20 h-20 text-pink-500 mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-gray-800">No Orders Yet</h2>
+          <p className="text-gray-500 mt-2">
+            Browse delicious bakeries and place your first order!
+          </p>
         </div>
-        <h2 className="text-2xl font-semibold mt-2 text-gray-800">
-          No orders yet
-        </h2>
-        <p className="text-gray-500 mt-2">
-          Start exploring delicious bakeries and place your first order.
-        </p>
       </div>
     );
 
-  // Status badge UI
-  const getStatusBadge = (status) => {
-    if (status === "pending")
-      return (
-        <span className="bg-yellow-100 text-yellow-700 px-3 py-1 text-xs md:text-sm rounded-full flex items-center gap-2 w-fit">
-          <Clock size={14} /> Pending
-        </span>
-      );
-    if (status === "confirmed")
-      return (
-        <span className="bg-blue-100 text-blue-700 px-3 py-1 text-xs md:text-sm rounded-full flex items-center gap-2 w-fit">
-          <Truck size={14} /> Confirmed
-        </span>
-      );
-    if (status === "ready")
-      return (
-        <span className="bg-purple-100 text-purple-700 px-3 py-1 text-xs md:text-sm rounded-full flex items-center gap-2 w-fit">
-          <Truck size={14} /> Ready for Pickup
-        </span>
-      );
-    if (status === "completed")
-      return (
-        <span className="bg-green-100 text-green-700 px-3 py-1 text-xs md:text-sm rounded-full flex items-center gap-2 w-fit">
-          <CheckCircle size={14} /> Completed
-        </span>
-      );
-    return (
-      <span className="bg-gray-100 text-gray-600 px-3 py-1 text-xs md:text-sm rounded-full">
-        {status}
-      </span>
-    );
-  };
-
-  const handleTrack = (orderId) => {
-    navigate(`/track/${orderId}`);
+  // ---------------- STATUS BADGES ----------------
+  const getStatus = (status) => {
+    switch (status) {
+      case "pending":
+        return {
+          text: "Pending Confirmation",
+          icon: <Clock className="text-yellow-600" size={16} />,
+          class: "bg-yellow-100 text-yellow-700",
+        };
+      case "confirmed":
+        return {
+          text: "Confirmed • Baking Started",
+          icon: <Truck className="text-blue-600" size={16} />,
+          class: "bg-blue-100 text-blue-700",
+        };
+      case "ready":
+        return {
+          text: "Ready For Pickup",
+          icon: <Truck className="text-purple-600" size={16} />,
+          class: "bg-purple-100 text-purple-700",
+        };
+      case "completed":
+        return {
+          text: "Delivered Successfully",
+          icon: <CheckCircle className="text-green-600" size={16} />,
+          class: "bg-green-100 text-green-700",
+        };
+      default:
+        return {
+          text: status,
+          icon: <Package size={16} />,
+          class: "bg-gray-100 text-gray-700",
+        };
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF5FA]">
-      <div className="max-w-5xl mx-auto p-6">
-        <h1 className="text-4xl font-bold text-pink-600 mb-8">My Orders</h1>
+    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white py-12 px-5">
+      <div className="max-w-5xl mx-auto">
+        {/* HEADER */}
+        <h1 className="text-4xl font-extrabold text-pink-600 mb-10">
+          My Orders
+        </h1>
 
-        <div className="space-y-8">
-          {orders.map((order) => (
-            <div
-              key={order._id}
-              className="bg-white rounded-2xl shadow-md p-6 border border-pink-100 hover:shadow-xl transition"
-            >
-              {/* Header */}
-              <div className="flex justify-between items-start mb-4 gap-4">
-                <div>
-                  <h2 className="text-lg md:text-xl font-semibold text-gray-800">
-                    Order #{order._id.slice(-6)}
-                  </h2>
-                  <p className="text-xs md:text-sm text-gray-500 mt-1">
-                    Placed on{" "}
-                    {new Date(order.createdAt).toLocaleString("en-IN", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </p>
+        <div className="space-y-10">
+          {orders.map((order, i) => {
+            const statusInfo = getStatus(order.status);
+
+            return (
+              <div
+                key={order._id}
+                className="bg-white rounded-3xl shadow-xl border border-pink-100 p-8 hover:shadow-2xl transition-all animate-slideUp"
+                style={{ animationDelay: `${i * 0.05}s` }}
+              >
+                {/* Order Header */}
+                <div className="flex justify-between flex-wrap gap-4 mb-5">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      Order #{order._id.slice(-6)}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Placed on{" "}
+                      {new Date(order.createdAt).toLocaleString("en-IN", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                        hour: "numeric",
+                        minute: "numeric",
+                      })}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`${statusInfo.class} px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium`}
+                  >
+                    {statusInfo.icon} {statusInfo.text}
+                  </span>
                 </div>
 
-                {getStatusBadge(order.status)}
-              </div>
+                {/* ITEMS CARD */}
+                <div className="bg-pink-50 rounded-2xl p-5">
+                  <h3 className="font-semibold text-gray-800 mb-4">
+                    Order Items
+                  </h3>
 
-              {/* Items */}
-              <div className="bg-pink-50 rounded-xl p-4 mb-4">
-                <h3 className="font-semibold text-gray-700 mb-2 text-sm md:text-base">
-                  Items
-                </h3>
+                  <div className="space-y-3">
+                    {order.items.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center border-b border-pink-100 pb-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              item.imageUrl ||
+                              "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600"
+                            }
+                            alt={item.name}
+                            className="w-14 h-14 rounded-xl object-cover border"
+                          />
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              {item.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Qty: {item.qty}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="font-semibold text-gray-900">
+                          ₹{item.qty * item.price}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-                <ul className="space-y-1 text-gray-700 text-sm md:text-base">
-                  {order.items.map((item, index) => (
-                    <li
-                      key={index}
-                      className="flex justify-between border-b border-pink-100 pb-1"
+                {/* TOTAL + BUTTONS */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-6 gap-4">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Total:{" "}
+                    <span className="text-pink-600 font-extrabold">
+                      ₹{order.total}
+                    </span>
+                  </h3>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => navigate(`/track/${order._id}`)}
+                      className="flex items-center gap-2 bg-pink-600 text-white px-5 py-2.5 text-sm md:text-base rounded-xl shadow-lg hover:bg-pink-700 transition active:scale-95"
                     >
-                      <span>
-                        {item.name} × <b>{item.qty}</b>
-                      </span>
-                      <span>₹{item.price * item.qty}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                      Track Order <ChevronRight size={18} />
+                    </button>
 
-              {/* Total + Actions */}
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h3 className="text-lg md:text-xl font-bold text-gray-900">
-                  Total: <span className="text-pink-600">₹{order.total}</span>
-                </h3>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleTrack(order._id)}
-                    className="bg-pink-500 text-white px-4 py-2 rounded-xl text-sm md:text-base hover:bg-pink-600 transition shadow"
-                  >
-                    Track Order →
-                  </button>
-
-                  <button
-                    className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-sm md:text-base hover:bg-gray-50 transition"
-                    onClick={() => alert("Reorder feature coming soon")}
-                  >
-                    Reorder
-                  </button>
+                    <button
+                      onClick={() => alert("Reorder feature coming soon")}
+                      className="flex items-center gap-2 bg-white border border-gray-300 px-5 py-2.5 text-sm md:text-base rounded-xl shadow hover:bg-gray-100 transition active:scale-95"
+                    >
+                      <RefreshCcw size={16} />
+                      Reorder
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

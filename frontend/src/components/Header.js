@@ -109,12 +109,6 @@ export default function Header() {
                 >
                   Admin Dashboard
                 </button>
-                <button
-                  onClick={() => navigate("/admin/bakeries")}
-                  className="hover:text-pink-600"
-                >
-                  Manage Bakeries
-                </button>
               </>
             )}
           </nav>
@@ -154,13 +148,18 @@ export default function Header() {
 
                 {openProfile && (
                   <div className="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-lg border border-gray-100 py-2 z-50">
+                    {/* My Profile */}
                     <button
-                      onClick={goToProfile}
+                      onClick={() => {
+                        navigate("/profile");
+                        setOpenProfile(false);
+                      }}
                       className="w-full text-left px-4 py-2 hover:bg-pink-50"
                     >
                       My Profile
                     </button>
 
+                    {/* My Orders – Only for Customer */}
                     {role === "customer" && (
                       <button
                         onClick={() => {
@@ -173,13 +172,18 @@ export default function Header() {
                       </button>
                     )}
 
+                    {/* Settings */}
                     <button
-                      onClick={() => navigate("/settings")}
+                      onClick={() => {
+                        navigate("/settings");
+                        setOpenProfile(false);
+                      }}
                       className="w-full text-left px-4 py-2 hover:bg-pink-50"
                     >
                       Settings
                     </button>
 
+                    {/* Logout */}
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 hover:bg-pink-50 text-red-600 flex items-center gap-2"
