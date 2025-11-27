@@ -1,113 +1,212 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Register() {
-  const [role, setRole] = useState("customer");
   const [name, setName] = useState("");
+  const [role, setRole] = useState("owner"); // always owner
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
+
+  // validation states
+  const [emailError, setEmailError] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Auto-select owner if coming from ?role=owner
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const r = params.get("role");
+    if (r === "owner") setRole("owner");
+  }, [location]);
+
+  // Validate email format
+  const validateEmail = (value) => {
+    setEmail(value);
+    const pattern = /\S+@\S+\.\S+/;
+    if (!pattern.test(value)) {
+      setEmailError("Invalid email format");
+    } else {
+      setEmailError("");
+    }
+  };
+
+  // Validate name
+  const validateName = (value) => {
+    setName(value);
+    if (value.length < 3) {
+      setNameError("Name must be at least 3 characters");
+    } else {
+      setNameError("");
+    }
+  };
+
+  // Check password strength
+  const checkStrength = (value) => {
+    setPassword(value);
+
+    if (value.length < 6) {
+      setPasswordStrength("weak");
+    } else if (value.length < 10) {
+      setPasswordStrength("medium");
+    } else {
+      setPasswordStrength("strong");
+    }
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
-    try {
-      const endpoint =
-        role === "customer" ? "/register-customer" : "/register-owner";
+    if (emailError || nameError) {
+      setError("Fix the errors before submitting");
+      return;
+    }
 
-      await axios.post(`http://localhost:5000/api/auth${endpoint}`, {
+    try {
+      await axios.post("http://localhost:5000/api/auth/register-owner", {
         name,
         email,
         password,
       });
 
-      alert("Registered Successfully!");
+      alert("Registered successfully. Wait for admin approval.");
       navigate("/login");
     } catch (err) {
       setError(err.response?.data?.error || "Registration failed");
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 to-pink-200">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-96">
-        <h2 className="text-3xl font-bold text-center text-pink-600 mb-6">
-          🍰 Create Your Account
-        </h2>
+  // Password strength color class
+  const strengthColor =
+    passwordStrength === "weak"
+      ? "text-red-600"
+      : passwordStrength === "medium"
+      ? "text-yellow-600"
+      : passwordStrength === "strong"
+      ? "text-green-600"
+      : "text-gray-500";
 
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-pink-50 to-slate-100">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-lg px-8 py-10">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold text-slate-900">
+            Register Your Bakery
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Create a bakery owner account to manage your bakery.
+          </p>
+        </div>
+
+        {error && (
+          <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleRegister} className="space-y-4">
-          {/* Role Selector */}
-          <div className="flex justify-between bg-pink-50 p-2 rounded-lg">
-            <button
-              type="button"
-              onClick={() => setRole("customer")}
-              className={`w-1/2 py-2 rounded-lg ${
-                role === "customer" ? "bg-pink-500 text-white" : "text-pink-600"
-              }`}
-            >
-              Customer
-            </button>
+          <input type="hidden" value={role} />
 
-            <button
-              type="button"
-              onClick={() => setRole("owner")}
-              className={`w-1/2 py-2 rounded-lg ${
-                role === "owner" ? "bg-pink-500 text-white" : "text-pink-600"
-              }`}
-            >
-              Bakery Owner
-            </button>
+          {/* FULL NAME */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Owner Full Name
+            </label>
+            <input
+              type="text"
+              placeholder="Enter your full name"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm
+                focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400"
+              value={name}
+              onChange={(e) => validateName(e.target.value)}
+              required
+            />
+            {nameError && (
+              <p className="text-xs text-red-600 mt-1">{nameError}</p>
+            )}
           </div>
 
-          <input
-            type="text"
-            placeholder="Full Name"
-            className="w-full px-4 py-2 border rounded-lg"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+          {/* EMAIL */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Owner Email
+            </label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm
+                focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400"
+              value={email}
+              onChange={(e) => validateEmail(e.target.value)}
+              required
+            />
+            {emailError && (
+              <p className="text-xs text-red-600 mt-1">{emailError}</p>
+            )}
+          </div>
 
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full px-4 py-2 border rounded-lg"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+          {/* PASSWORD + EYE ICON + STRENGTH */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Password
+            </label>
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full px-4 py-2 border rounded-lg"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Create a strong password"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm
+                  focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400"
+                value={password}
+                onChange={(e) => checkStrength(e.target.value)}
+                required
+              />
 
+              {/* EYE ICON */}
+              <div
+                className="absolute right-3 top-2.5 cursor-pointer text-slate-500"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </div>
+            </div>
+
+            {/* PASSWORD STRENGTH */}
+            {password && (
+              <p className={`text-xs mt-1 font-medium ${strengthColor}`}>
+                {passwordStrength === "weak" && "Weak password"}
+                {passwordStrength === "medium" && "Medium strength password"}
+                {passwordStrength === "strong" && "Strong password"}
+              </p>
+            )}
+          </div>
+
+          {/* SUBMIT BUTTON */}
           <button
             type="submit"
-            className="w-full bg-pink-500 text-white py-2 rounded-lg hover:bg-pink-600 transition"
+            className="w-full mt-2 bg-pink-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-pink-700 transition shadow-sm"
           >
-            Register
+            Register Bakery Owner
           </button>
-
-          <p className="text-center text-sm text-gray-600 mt-2">
-            Already have an account?{" "}
-            <span
-              onClick={() => navigate("/login")}
-              className="text-pink-600 cursor-pointer hover:underline"
-            >
-              Login
-            </span>
-          </p>
         </form>
+
+        <p className="text-xs text-center text-slate-500 mt-6">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-pink-600 hover:text-pink-700 font-medium"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );

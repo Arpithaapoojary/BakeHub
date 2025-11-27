@@ -1,17 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { Search } from "lucide-react";
 
-/**
- * CustomerMenu (improved)
- * - Uses product.category
- * - Static category chips (derived from known list, but also shows categories from products)
- * - Search + Sort (price low-high / high-low / popular)
- * - Swiggy-style cards, quantity selector, add-to-cart
- */
-
+// STATIC CATEGORIES
 const STATIC_CATEGORIES = [
   "All",
   "Cakes",
@@ -24,6 +17,16 @@ const STATIC_CATEGORIES = [
 
 export default function CustomerMenu() {
   const { id } = useParams(); // bakeryId
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // 🔒 LOGIN PROTECTION (CORRECT PLACE)
+  useEffect(() => {
+    if (!user) {
+      navigate("/login", { state: { from: `/customer/menu/${id}` } });
+    }
+  }, []);
+
   const [products, setProducts] = useState([]);
   const [bakery, setBakery] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,8 +34,8 @@ export default function CustomerMenu() {
   // UI state
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [sort, setSort] = useState("recommended"); // recommended | price-asc | price-desc
-  const [qtyMap, setQtyMap] = useState({}); // quantity per product
+  const [sort, setSort] = useState("recommended");
+  const [qtyMap, setQtyMap] = useState({});
 
   const { addToCart } = useCart();
 
@@ -40,22 +43,24 @@ export default function CustomerMenu() {
     const load = async () => {
       try {
         setLoading(true);
-        // Bakery info
+
+        // 🍞 Load bakery info
         const bRes = await axios.get(
           `http://localhost:5000/api/bakeries/${id}`
         );
         setBakery(bRes.data);
 
-        // Owner products
+        // 🧁 Load products
         const pRes = await axios.get(
           `http://localhost:5000/api/products/${id}`
         );
-        // Normalize category fallback
+
         const normalized = (pRes.data || []).map((p) => ({
           ...p,
           category: p.category || "Uncategorized",
-          imageUrl: p.imageUrl || p.image || p.imageUrl || "",
+          imageUrl: p.imageUrl || p.image || "",
         }));
+
         setProducts(normalized);
       } catch (err) {
         console.error("Error loading menu:", err);
@@ -67,39 +72,41 @@ export default function CustomerMenu() {
     load();
   }, [id]);
 
-  // derived category list (products + static)
+  // dynamic categories + static
   const categories = useMemo(() => {
     const prodCats = Array.from(
       new Set(products.map((p) => p.category || "Uncategorized"))
     );
-    // merge static so UI stays consistent
     return Array.from(new Set([...STATIC_CATEGORIES, ...prodCats]));
   }, [products]);
 
-  // Filtered & sorted products
+  // filter + sort
   const filtered = useMemo(() => {
     let list = [...products];
-    const q = (query || "").trim().toLowerCase();
-    if (selectedCategory && selectedCategory !== "All") {
-      list = list.filter(
-        (p) => (p.category || "Uncategorized") === selectedCategory
-      );
+    const q = query.toLowerCase();
+
+    if (selectedCategory !== "All") {
+      list = list.filter((p) => p.category === selectedCategory);
     }
+
     if (q) {
       list = list.filter(
         (p) =>
-          (p.name || "").toLowerCase().includes(q) ||
-          (p.description || "").toLowerCase().includes(q)
+          p.name.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q)
       );
     }
-    if (sort === "price-asc")
-      list.sort((a, b) => (a.price || 0) - (b.price || 0));
-    else if (sort === "price-desc")
-      list.sort((a, b) => (b.price || 0) - (a.price || 0));
-    // recommended or default keeps server order
+
+    if (sort === "price-asc") {
+      list.sort((a, b) => a.price - b.price);
+    } else if (sort === "price-desc") {
+      list.sort((a, b) => b.price - a.price);
+    }
+
     return list;
   }, [products, selectedCategory, query, sort]);
 
+  // qty logic
   const incrementQty = (id) =>
     setQtyMap((m) => ({ ...m, [id]: (m[id] || 1) + 1 }));
   const decrementQty = (id) =>
@@ -108,7 +115,8 @@ export default function CustomerMenu() {
   const handleAddToCart = (product) => {
     const qty = qtyMap[product._id] || 1;
     addToCart({ ...product, qty });
-    // small UI feedback — reset qty to 1
+
+    // reset
     setQtyMap((m) => ({ ...m, [product._id]: 1 }));
   };
 
@@ -120,6 +128,7 @@ export default function CustomerMenu() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
+      {/* TOP HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-pink-600">{bakery.name}</h1>
@@ -127,29 +136,31 @@ export default function CustomerMenu() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* SEARCH */}
           <div className="flex items-center bg-white border rounded-lg px-3 py-2 gap-2 shadow-sm">
             <Search size={16} />
             <input
               className="outline-none w-64"
-              placeholder="Search cakes, snacks, beverages..."
+              placeholder="Search cakes, snacks..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
 
+          {/* SORT */}
           <select
             className="ml-3 border rounded-lg px-3 py-2 bg-white"
             value={sort}
             onChange={(e) => setSort(e.target.value)}
           >
             <option value="recommended">Recommended</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
+            <option value="price-asc">Price: Low → High</option>
+            <option value="price-desc">Price: High → Low</option>
           </select>
         </div>
       </div>
 
-      {/* Categories */}
+      {/* CATEGORIES */}
       <div className="mb-6 flex flex-wrap gap-3">
         {categories.map((c) => (
           <button
@@ -166,11 +177,11 @@ export default function CustomerMenu() {
         ))}
       </div>
 
-      {/* Grid */}
+      {/* PRODUCT GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {filtered.length === 0 && (
           <div className="col-span-full text-center text-slate-500">
-            No items match your search.
+            No items found.
           </div>
         )}
 
@@ -198,6 +209,7 @@ export default function CustomerMenu() {
                   <h3 className="text-lg font-semibold">{p.name}</h3>
                   <p className="text-sm text-slate-500">{p.description}</p>
                 </div>
+
                 <div className="text-right">
                   <div className="text-pink-600 font-bold text-lg">
                     ₹{p.price}
@@ -211,6 +223,7 @@ export default function CustomerMenu() {
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-3">
+                {/* QTY */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => decrementQty(p._id)}
@@ -229,20 +242,19 @@ export default function CustomerMenu() {
                   </button>
                 </div>
 
-                <div>
-                  {p.isSoldOut ? (
-                    <div className="px-4 py-2 rounded-md bg-red-100 text-red-700">
-                      Sold out
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleAddToCart(p)}
-                      className="px-4 py-2 rounded-md bg-pink-600 text-white shadow"
-                    >
-                      Add
-                    </button>
-                  )}
-                </div>
+                {/* ADD BUTTON */}
+                {p.isSoldOut ? (
+                  <div className="px-4 py-2 rounded-md bg-red-100 text-red-700">
+                    Sold out
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleAddToCart(p)}
+                    className="px-4 py-2 rounded-md bg-pink-600 text-white shadow"
+                  >
+                    Add
+                  </button>
+                )}
               </div>
             </div>
           </div>

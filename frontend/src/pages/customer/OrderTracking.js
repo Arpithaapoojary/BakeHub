@@ -1,204 +1,160 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { Clock, CheckCircle, Loader2, Truck } from "lucide-react";
+import { Clock, CheckCircle, Truck } from "lucide-react";
 
-/**
- * OrderTracking.js
- * Route: /track/:orderId
- *
- * - Fetches single order via GET /api/orders/:orderId
- * - Polls every 10s to auto-refresh status (clear on unmount)
- * - Shows timeline: Pending -> Confirmed -> Preparing -> Out for delivery -> Delivered
- * - Shows bakery info, items, totals, ETA estimate
- *
- * Note: Adjust API host if you use env variables.
- */
-
-const STATUS_STEPS = [
-  { key: "pending", label: "Pending" },
-  { key: "confirmed", label: "Confirmed" },
-  { key: "preparing", label: "Preparing" },
-  { key: "out_for_delivery", label: "Out for delivery" },
-  { key: "completed", label: "Delivered" },
-];
-
-const statusColor = (key) => {
-  if (key === "completed") return "bg-green-100 text-green-700";
-  if (key === "out_for_delivery") return "bg-amber-100 text-amber-700";
-  if (key === "preparing") return "bg-blue-100 text-blue-700";
-  if (key === "confirmed") return "bg-indigo-100 text-indigo-700";
-  return "bg-yellow-100 text-yellow-700"; // pending
-};
+const STEPS = ["pending", "confirmed", "ready", "completed"];
 
 export default function OrderTracking() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [polling, setPolling] = useState(true);
-  const intervalRef = useRef(null);
 
   const token = localStorage.getItem("token");
 
-  const fetchOrder = async () => {
-    try {
-      const res = await axios.get(`http://localhost:5000/api/orders/${orderId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      setOrder(res.data);
-      setLoading(false);
-      // If order is completed, stop polling.
-      if (res.data?.status === "completed") setPolling(false);
-    } catch (err) {
-      console.error("Failed to fetch order:", err);
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchOrder();
-
-    // start polling every 10s
-    intervalRef.current = setInterval(() => {
-      fetchOrder();
-    }, 10000);
-
-    return () => {
-      clearInterval(intervalRef.current);
+    const fetchOrder = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/orders/${orderId}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }
+        );
+        setOrder(res.data);
+      } catch (err) {
+        console.error("Error fetching order:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId]);
 
-  // Helper: map order.status to step index
-  const currentStepIndex = () => {
-    if (!order || !order.status) return 0;
-    const idx = STATUS_STEPS.findIndex((s) => s.key === order.status);
-    return idx === -1 ? 0 : idx;
-  };
+    fetchOrder();
+  }, [orderId, token]);
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-pink-600 font-semibold">Loading order...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FFF5FA] text-pink-600">
+        Loading order...
       </div>
     );
 
   if (!order)
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="bg-white p-8 rounded-2xl shadow-md text-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#FFF5FA]">
+        <div className="bg-white p-8 rounded-2xl shadow text-center">
           <p className="text-gray-700 mb-4">Order not found.</p>
           <button
-            onClick={() => navigate("/")}
-            className="px-4 py-2 bg-pink-600 text-white rounded-lg"
+            onClick={() => navigate("/orders")}
+            className="px-4 py-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 transition"
           >
-            Back to Home
+            Back to My Orders
           </button>
         </div>
       </div>
     );
 
-  const stepIndex = currentStepIndex();
+  const currentIndex = STEPS.indexOf(order.status);
 
-  // Prepare ETA: simple heuristic — you can replace with real data
-  const eta = (() => {
-    switch (order.status) {
-      case "pending":
-        return "15–25 min";
-      case "confirmed":
-        return "20–35 min";
-      case "preparing":
-        return "25–40 min";
-      case "out_for_delivery":
-        return "5–15 min";
-      case "completed":
-        return "Delivered";
-      default:
-        return "30–45 min";
-    }
-  })();
+  const getLabel = (s) => {
+    if (s === "pending") return "Pending";
+    if (s === "confirmed") return "Confirmed";
+    if (s === "ready") return "Ready for Pickup";
+    if (s === "completed") return "Completed";
+    return s;
+  };
 
   return (
-    <div className="min-h-screen bg-[#FFF5FA] p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#FFF5FA]">
+      <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-pink-600">Track Order</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Order #{order._id.slice(-8)} — Placed{" "}
-              {new Date(order.createdAt).toLocaleString()}
+            <h1 className="text-3xl font-bold text-pink-600">Order Tracking</h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Order #{order._id.slice(-6)} • Placed on{" "}
+              {new Date(order.createdAt).toLocaleString("en-IN", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
             </p>
           </div>
 
-          <div className="text-right">
-            <div className="text-sm text-slate-500">Estimated</div>
-            <div className="text-lg font-semibold">{eta}</div>
-          </div>
-        </div>
-
-        {/* Top card: status summary */}
-        <div className="bg-white rounded-2xl p-6 shadow mb-6 border border-pink-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-pink-50 flex items-center justify-center">
-                <Clock className="text-pink-600" />
-              </div>
-              <div>
-                <div className="text-sm text-slate-500">Current Status</div>
-                <div className="text-xl font-semibold capitalize">{order.status.replace(/_/g, " ")}</div>
-              </div>
-            </div>
-
-            <div className="text-right">
-              {order.status === "completed" ? (
-                <div className="bg-green-50 text-green-700 px-3 py-1 rounded-full">Delivered ✓</div>
-              ) : (
-                <div className="bg-amber-50 text-amber-700 px-3 py-1 rounded-full">In progress</div>
-              )}
-            </div>
-          </div>
+          <button
+            onClick={() => navigate("/orders")}
+            className="text-sm px-4 py-2 rounded-lg border border-pink-200 text-pink-600 hover:bg-pink-50 transition"
+          >
+            Back to My Orders
+          </button>
         </div>
 
         {/* Timeline */}
-        <div className="bg-white rounded-2xl p-6 shadow mb-6 border border-pink-100">
-          <h3 className="text-lg font-semibold mb-4">Order Progress</h3>
+        <div className="bg-white rounded-2xl shadow-md p-6 border border-pink-100 mb-8">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Order Status
+          </h2>
 
           <div className="flex flex-col gap-6">
-            {STATUS_STEPS.map((s, i) => {
-              const done = i < stepIndex;
-              const active = i === stepIndex;
+            {STEPS.map((step, index) => {
+              const done = index < currentIndex;
+              const active = index === currentIndex;
+
               return (
-                <div key={s.key} className="flex items-start gap-4">
+                <div key={step} className="flex gap-4 items-start">
+                  {/* Icon + line */}
                   <div className="flex flex-col items-center">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        done ? "bg-green-500 text-white" : active ? "bg-pink-600 text-white" : "bg-gray-100 text-gray-500"
+                      className={`w-8 h-8 rounded-full flex items-center justify-center 
+                      ${
+                        done
+                          ? "bg-green-500 text-white"
+                          : active
+                          ? "bg-pink-500 text-white"
+                          : "bg-gray-100 text-gray-400"
                       }`}
                     >
-                      {done ? <CheckCircle size={18} /> : active ? <Loader2 size={18} className="animate-spin" /> : <Clock size={14} />}
+                      {done ? (
+                        <CheckCircle size={18} />
+                      ) : active ? (
+                        <Clock size={18} />
+                      ) : (
+                        <Clock size={16} />
+                      )}
                     </div>
-                    {i !== STATUS_STEPS.length - 1 && (
-                      <div className={`w-px h-12 ${done ? "bg-green-300" : "bg-gray-200"} mt-1`} />
+                    {index !== STEPS.length - 1 && (
+                      <div
+                        className={`w-px h-10 ${
+                          done ? "bg-green-300" : "bg-gray-200"
+                        }`}
+                      />
                     )}
                   </div>
 
+                  {/* Text */}
                   <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div className="font-semibold text-gray-800">{s.label}</div>
-                      <div className="text-sm text-slate-500">
-                        {i < stepIndex ? "Completed" : active ? "In progress" : "Waiting"}
-                      </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-gray-800">
+                        {getLabel(step)}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {index < currentIndex
+                          ? "Completed"
+                          : active
+                          ? "In progress"
+                          : "Pending"}
+                      </span>
                     </div>
-
-                    <div className="text-sm text-slate-500 mt-1">
-                      {i === stepIndex && order?.statusMessage
-                        ? order.statusMessage
-                        : i < stepIndex
-                        ? `Finished at ${new Date(order.updatedAt).toLocaleTimeString()}`
-                        : "—"}
-                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {step === "pending" &&
+                        "We received your order and will start processing soon."}
+                      {step === "confirmed" &&
+                        "Bakery has confirmed your order and started preparing."}
+                      {step === "ready" &&
+                        "Your order is ready for pickup / handover."}
+                      {step === "completed" &&
+                        "Order is completed. Enjoy your treats!"}
+                    </p>
                   </div>
                 </div>
               );
@@ -206,60 +162,30 @@ export default function OrderTracking() {
           </div>
         </div>
 
-        {/* Order details + bakery */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl p-6 shadow border border-pink-100">
-            <h3 className="text-lg font-semibold mb-3">Order Details</h3>
-            <div className="space-y-3">
-              {order.items.map((it, idx) => (
-                <div key={idx} className="flex justify-between items-start">
-                  <div>
-                    <div className="font-medium">{it.name}</div>
-                    <div className="text-sm text-slate-500">Qty: {it.qty}</div>
-                  </div>
-                  <div className="text-sm font-semibold">₹{it.price * it.qty}</div>
-                </div>
-              ))}
+        {/* Order summary */}
+        <div className="bg-white rounded-2xl shadow-md p-6 border border-pink-100">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Order Summary
+          </h2>
 
-              <hr className="my-3" />
-
-              <div className="flex justify-between text-gray-700">
-                <div>Subtotal</div>
-                <div>₹{order.total}</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow border border-pink-100">
-            <h3 className="text-lg font-semibold mb-3">Bakery</h3>
-            <div className="text-sm text-slate-700 mb-3">
-              {order.bakeryName || order.bakery?.name || "Bakery"}
-            </div>
-
-            <div className="text-sm text-slate-500 mb-4">
-              Contact: {order.customerPhone || order.phone || "—"}
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => navigate("/orders")}
-                className="px-4 py-2 rounded-lg bg-pink-600 text-white"
+          <ul className="space-y-2 text-sm text-gray-700 mb-4">
+            {order.items.map((item, idx) => (
+              <li
+                key={idx}
+                className="flex justify-between border-b border-pink-50 pb-1"
               >
-                My Orders
-              </button>
+                <span>
+                  {item.name} × <b>{item.qty}</b>
+                </span>
+                <span>₹{item.price * item.qty}</span>
+              </li>
+            ))}
+          </ul>
 
-              <button
-                onClick={() => alert("Track on map coming soon")}
-                className="px-4 py-2 rounded-lg border"
-              >
-                Track on Map
-              </button>
-            </div>
+          <div className="flex justify-between text-base font-semibold text-gray-900">
+            <span>Total</span>
+            <span className="text-pink-600">₹{order.total}</span>
           </div>
-        </div>
-
-        <div className="mt-8 text-center text-sm text-slate-500">
-          This page refreshes automatically every 10 seconds.
         </div>
       </div>
     </div>
