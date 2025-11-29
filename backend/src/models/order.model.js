@@ -7,6 +7,13 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+    bakeryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bakery",
+      required: true,
+    },
+
     items: [
       {
         name: String,
@@ -14,10 +21,12 @@ const orderSchema = new mongoose.Schema(
         qty: Number,
       },
     ],
+
     total: Number,
+
     status: {
       type: String,
-      enum: ["pending", "confirmed", "completed"],
+      enum: ["pending", "confirmed", "ready", "completed"],
       default: "pending",
     },
   },
