@@ -13,6 +13,10 @@ import menuRoutes from "./routes/menu.routes.js";
 import bakeryRoutes from "./routes/bakery.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
 
+import userRoutes from "./routes/user.routes.js";
+
+
+
 const app = express();
 
 // 🔥 Allow frontend (React) to connect
@@ -59,6 +63,8 @@ app.use("/api/bakeries", bakeryRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
+
+app.use("/api/users", userRoutes);
 
 app.use("/api/analytics", analyticsRoutes);
 

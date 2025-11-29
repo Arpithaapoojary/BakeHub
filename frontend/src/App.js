@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import Navbar from "./components/Navbar";
+
+import Invoice from "./pages/customer/Invoice";
 
 // Pages
 import HomePage from "./pages/HomePage";
@@ -28,6 +29,12 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
+import OwnerSettings from "./pages/owner/OwnerSettings";
+import AdminSettings from "./pages/admin/AdminSettings";
+
+import MyProfile from "./pages/common/MyProfile";
+
+
 import { CartProvider } from "./context/CartContext";
 
 export default function App() {
@@ -42,12 +49,17 @@ export default function App() {
               {/* Home Page */}
               <Route path="/" element={<HomePage />} />
 
+              <Route path="/invoice/:orderId" element={<Invoice />} />
+
               {/* Auth */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
+
+              <Route path="/profile" element={<MyProfile />} />
+
 
               <Route
                 path="/reset-password/:token"
@@ -67,8 +79,14 @@ export default function App() {
               <Route path="/orders" element={<MyOrders />} />
               <Route path="/track/:orderId" element={<OrderTracking />} />
 
+              <Route path="/owner/settings" element={<OwnerSettings />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+
               {/* Owner */}
               <Route path="/owner" element={<OwnerDashboard />} />
+
+            
+
 
               {/* Admin */}
               <Route path="/admin" element={<AdminDashboard />} />

@@ -19,15 +19,54 @@ const orderSchema = new mongoose.Schema(
         name: String,
         price: Number,
         qty: Number,
+        bakeryId: mongoose.Schema.Types.ObjectId,
       },
     ],
 
-    total: Number,
+    total: {
+      type: Number,
+      required: true,
+    },
+
+    address: {
+      type: String,
+      required: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+    },
+
+    note: {
+      type: String,
+      default: "",
+    },
 
     status: {
       type: String,
       enum: ["pending", "confirmed", "ready", "completed"],
       default: "pending",
+    },
+
+    // --------------------------
+    // PAYMENT FIELDS (REQUIRED)
+    // --------------------------
+    paymentMethod: {
+      type: String,
+      enum: ["cod", "online"],
+      default: "cod",
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid"],
+      default: "pending",
+    },
+
+    paidAmount: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

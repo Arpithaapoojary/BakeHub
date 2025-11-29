@@ -1,51 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { User, Phone, Lock } from "lucide-react";
 
-export default function Settings() {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+export default function OwnerSettings() {
+  const [name, setName] = useState(localStorage.getItem("name") || "");
+  const [phone, setPhone] = useState(localStorage.getItem("phone") || "");
   const [password, setPassword] = useState("");
 
   const token = localStorage.getItem("token");
 
-  // 1) LOAD CURRENT USER FROM BACKEND
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const res = await fetch("http://localhost:5000/api/users/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          console.log("Error loading profile:", data);
-          return;
-        }
-
-        setName(data.name || "");
-        setPhone(data.phone || "");
-
-        // keep navbar & other places in sync
-        localStorage.setItem("name", data.name || "");
-        localStorage.setItem("phone", data.phone || "");
-        localStorage.setItem("email", data.email || "");
-        localStorage.setItem("createdAt", data.createdAt || "");
-      } catch (err) {
-        console.log("Error loading profile:", err);
-      }
-    }
-
-    if (token) {
-      loadProfile();
-    }
-  }, [token]);
-
-  // 2) UPDATE NAME + PHONE IN BACKEND
+  // UPDATE PROFILE
   const updateProfile = async () => {
     if (!name.trim() || !phone.trim()) {
-      alert("Name and phone cannot be empty");
+      alert("Name and Phone cannot be empty.");
       return;
     }
 
@@ -63,28 +29,20 @@ export default function Settings() {
       );
 
       const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Failed to update profile");
-        return;
-      }
+      if (!res.ok) return alert(data.error);
 
-      // sync localStorage again
       localStorage.setItem("name", name);
       localStorage.setItem("phone", phone);
 
       alert("Profile updated successfully!");
     } catch (err) {
-      console.log(err);
       alert("Something went wrong");
     }
   };
 
-  // 3) UPDATE PASSWORD
+  // UPDATE PASSWORD
   const updatePassword = async () => {
-    if (!password.trim()) {
-      alert("Please enter a new password");
-      return;
-    }
+    if (!password.trim()) return alert("Enter a new password");
 
     const oldPassword = prompt("Enter your old password:");
     if (!oldPassword) return;
@@ -103,31 +61,30 @@ export default function Settings() {
       );
 
       const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Failed to update password");
-        return;
-      }
+      if (!res.ok) return alert(data.error);
 
-      alert("Password updated successfully!");
+      alert("Password updated!");
       setPassword("");
     } catch (err) {
-      console.log(err);
       alert("Something went wrong");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center py-14 px-6">
+    <div className="min-h-screen bg-gray-50 flex justify-center px-6 py-12">
       <div className="w-full max-w-2xl">
-        <h1 className="text-3xl font-semibold text-gray-900 mb-10">Settings</h1>
+        <h1 className="text-3xl font-semibold text-gray-900 mb-10">
+          Owner Settings
+        </h1>
 
-        <div className="bg-white p-10 rounded-3xl shadow-lg border border-gray-200 space-y-12">
+        <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-200 space-y-12">
           {/* NAME */}
           <section>
-            <h2 className="text-xl font-semibold mb-5 flex items-center gap-2 text-gray-800">
+            <h2 className="text-xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
               <User size={22} className="text-gray-600" />
               Name
             </h2>
+
             <input
               type="text"
               className="w-full p-3 rounded-xl border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-pink-400 outline-none"
@@ -138,10 +95,11 @@ export default function Settings() {
 
           {/* PHONE */}
           <section>
-            <h2 className="text-xl font-semibold mb-5 flex items-center gap-2 text-gray-800">
+            <h2 className="text-xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
               <Phone size={22} className="text-gray-600" />
               Phone Number
             </h2>
+
             <input
               type="text"
               className="w-full p-3 rounded-xl border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-pink-400 outline-none"
@@ -152,14 +110,14 @@ export default function Settings() {
 
           <button
             onClick={updateProfile}
-            className="px-6 py-2.5 bg-pink-600 text-white rounded-xl shadow hover:bg-pink-700 transition w-full"
+            className="px-6 py-2.5 bg-pink-600 text-white rounded-xl shadow hover:bg-pink-700 transition"
           >
             Save Profile
           </button>
 
           {/* PASSWORD */}
           <section className="pt-10 border-t border-gray-200">
-            <h2 className="text-xl font-semibold mb-5 flex items-center gap-2 text-gray-800">
+            <h2 className="text-xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
               <Lock size={22} className="text-gray-600" />
               Change Password
             </h2>
@@ -174,7 +132,7 @@ export default function Settings() {
 
             <button
               onClick={updatePassword}
-              className="mt-4 px-6 py-2.5 bg-black text-white rounded-xl hover:bg-gray-900 transition w-full"
+              className="mt-4 px-6 py-2.5 bg-black text-white rounded-xl hover:bg-gray-900 transition"
             >
               Update Password
             </button>

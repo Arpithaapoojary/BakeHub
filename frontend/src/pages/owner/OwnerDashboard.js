@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
   Home,
@@ -12,8 +12,6 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 export default function OwnerDashboard() {
@@ -23,9 +21,8 @@ export default function OwnerDashboard() {
   const [bakery, setBakery] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
 
-  // Product Modal
+  // product modal
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState({
     name: "",
@@ -35,6 +32,33 @@ export default function OwnerDashboard() {
     isSoldOut: false,
     category: "Uncategorized",
   });
+
+  // order filter (all / paid / pending)
+  const [orderFilter, setOrderFilter] = useState("all");
+
+  // -------------------------------------------------------------------
+  // HELPERS
+  // -------------------------------------------------------------------
+  const formatDateTime = (value) => {
+    if (!value) return "-";
+    return new Date(value).toLocaleString("en-IN", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
+
+  const formatMoney = (value) => {
+    if (!value || isNaN(value)) return "₹0";
+    return `₹${Number(value).toFixed(2)}`;
+  };
+
+  const isSameDay = (a, b) => {
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  };
 
   // -------------------------------------------------------------------
   // FETCH OWNER BAKERY
@@ -59,7 +83,7 @@ export default function OwnerDashboard() {
       const res = await axios.get(
         `http://localhost:5000/api/products/${bakery._id}`
       );
-      setProducts(res.data);
+      setProducts(res.data || []);
     } catch (err) {
       console.error("Products load error", err);
     }
@@ -74,23 +98,9 @@ export default function OwnerDashboard() {
         "http://localhost:5000/api/orders/owner-orders",
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setOrders(res.data);
+      setOrders(res.data || []);
     } catch (err) {
       console.error("Orders load error", err);
-    }
-  };
-
-  // -------------------------------------------------------------------
-  // FETCH ANALYTICS
-  // -------------------------------------------------------------------
-  const loadAnalytics = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/analytics/owner", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setAnalytics(res.data);
-    } catch (err) {
-      console.error("Analytics load error", err);
     }
   };
 
@@ -103,15 +113,19 @@ export default function OwnerDashboard() {
     if (bakery?._id) {
       loadProducts();
       loadOrders();
-      loadAnalytics();
     }
   }, [bakery]);
 
   // -------------------------------------------------------------------
-  // HANDLE PRODUCT SAVE (CREATE OR UPDATE)
+  // SAVE PRODUCT (CREATE / UPDATE)
   // -------------------------------------------------------------------
   const saveProduct = async () => {
     try {
+      if (!editProduct.name || !editProduct.price) {
+        alert("Name and price are required.");
+        return;
+      }
+
       if (editProduct._id) {
         // UPDATE
         await axios.put(
@@ -155,6 +169,7 @@ export default function OwnerDashboard() {
       loadProducts();
     } catch (err) {
       console.error("Save product error", err);
+      alert("Failed to save product.");
     }
   };
 
@@ -190,7 +205,113 @@ export default function OwnerDashboard() {
   };
 
   // -------------------------------------------------------------------
-  // COMPONENT UI
+  // ANALYTICS FROM ORDERS (NO EXTRA BACKEND NEEDED)
+  // -------------------------------------------------------------------
+  const stats = useMemo(() => {
+    if (!orders.length) {
+      return {
+        totalOrders: 0,
+        paidOrders: 0,
+        pendingPayments: 0,
+        totalRevenue: 0,
+        todaysOrdersCount: 0,
+        todaysRevenue: 0,
+        itemRevenue: [],
+        topTodayOrders: [],
+      };
+    }
+
+    const today = new Date();
+
+    let paidOrders = 0;
+    let pendingPayments = 0;
+    let totalRevenue = 0;
+    let todaysOrdersCount = 0;
+    let todaysRevenue = 0;
+
+    const itemMap = {};
+
+    orders.forEach((order) => {
+      const isPaid = order.paymentStatus === "paid";
+
+      if (isPaid) paidOrders++;
+      else pendingPayments++;
+
+      const paidAmount =
+        typeof order.paidAmount === "number" && !isNaN(order.paidAmount)
+          ? order.paidAmount
+          : isPaid
+          ? order.total || 0
+          : 0;
+
+      if (isPaid) totalRevenue += paidAmount;
+
+      const created = order.createdAt ? new Date(order.createdAt) : null;
+      if (created && isSameDay(created, today)) {
+        todaysOrdersCount++;
+        if (isPaid) todaysRevenue += paidAmount;
+      }
+
+      (order.items || []).forEach((it) => {
+        const key = it.name || "Unknown item";
+        if (!itemMap[key]) {
+          itemMap[key] = { name: key, qty: 0, revenue: 0 };
+        }
+        const qty = it.qty || 0;
+        const price = it.price || 0;
+        itemMap[key].qty += qty;
+        itemMap[key].revenue += qty * price;
+      });
+    });
+
+    const itemRevenue = Object.values(itemMap).sort(
+      (a, b) => b.revenue - a.revenue
+    );
+
+    const todayOrdersList = orders.filter((order) => {
+      if (!order.createdAt) return false;
+      return isSameDay(new Date(order.createdAt), today);
+    });
+
+    const topTodayOrders = [...todayOrdersList]
+      .sort((a, b) => {
+        const aAmt =
+          typeof a.paidAmount === "number" && !isNaN(a.paidAmount)
+            ? a.paidAmount
+            : a.total || 0;
+        const bAmt =
+          typeof b.paidAmount === "number" && !isNaN(b.paidAmount)
+            ? b.paidAmount
+            : b.total || 0;
+        return bAmt - aAmt;
+      })
+      .slice(0, 5);
+
+    return {
+      totalOrders: orders.length,
+      paidOrders,
+      pendingPayments,
+      totalRevenue,
+      todaysOrdersCount,
+      todaysRevenue,
+      itemRevenue,
+      topTodayOrders,
+    };
+  }, [orders]);
+
+  // filtered orders by payment status
+  const filteredOrders = useMemo(() => {
+    if (orderFilter === "paid") {
+      return orders.filter((o) => o.paymentStatus === "paid");
+    }
+    if (orderFilter === "pending") {
+      return orders.filter((o) => o.paymentStatus !== "paid");
+    }
+    return orders;
+  }, [orders, orderFilter]);
+
+  // -------------------------------------------------------------------
+  // UI MENU
   // -------------------------------------------------------------------
   const menu = [
     { id: "dashboard", label: "Dashboard", icon: <Home size={18} /> },
@@ -204,15 +325,21 @@ export default function OwnerDashboard() {
     <div className="flex min-h-screen bg-[#F8F4FF]">
       {/* SIDEBAR */}
       <aside className="w-64 bg-white shadow-xl border-r p-6 flex flex-col">
-        <h1 className="text-3xl font-bold text-pink-600 mb-10">
+        <h1 className="text-3xl font-bold text-pink-600 mb-8">
           BakeHub • Owner
         </h1>
+        {bakery && (
+          <p className="text-sm text-gray-500 mb-6">
+            Managing{" "}
+            <span className="font-semibold text-gray-800">{bakery.name}</span>
+          </p>
+        )}
 
         {menu.map((m) => (
           <button
             key={m.id}
             onClick={() => setActive(m.id)}
-            className={`flex gap-3 items-center p-3 rounded-lg mb-2 transition ${
+            className={`flex gap-3 items-center p-3 rounded-lg mb-2 text-sm font-medium transition ${
               active === m.id ? "bg-pink-100 text-pink-600" : "text-gray-700"
             }`}
           >
@@ -220,7 +347,13 @@ export default function OwnerDashboard() {
           </button>
         ))}
 
-        <button className="flex gap-3 items-center mt-auto text-red-500 hover:text-red-600">
+        <button
+          className="flex gap-3 items-center mt-auto text-red-500 hover:text-red-600 text-sm"
+          onClick={() => {
+            localStorage.clear();
+            window.location.href = "/";
+          }}
+        >
           <LogOut size={18} /> Logout
         </button>
       </aside>
@@ -230,24 +363,40 @@ export default function OwnerDashboard() {
         {/* ------------------ DASHBOARD ------------------ */}
         {active === "dashboard" && (
           <div>
-            <h2 className="text-4xl font-bold mb-6">Dashboard</h2>
+            <h2 className="text-3xl font-bold mb-2">Dashboard</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Quick overview of your bakery performance.
+            </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow border">
-                <p className="text-gray-500">Total Products</p>
-                <h3 className="text-3xl font-bold">{products.length}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white p-5 rounded-2xl shadow border">
+                <p className="text-xs text-gray-500 mb-1">Total Products</p>
+                <h3 className="text-2xl font-bold">{products.length}</h3>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow border">
-                <p className="text-gray-500">Total Orders</p>
-                <h3 className="text-3xl font-bold">{orders.length}</h3>
+              <div className="bg-white p-5 rounded-2xl shadow border">
+                <p className="text-xs text-gray-500 mb-1">Total Orders</p>
+                <h3 className="text-2xl font-bold">{stats.totalOrders}</h3>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow border">
-                <p className="text-gray-500">Total Revenue</p>
-                <h3 className="text-3xl font-bold">
-                  ₹{analytics?.totalRevenue || 0}
+              <div className="bg-white p-5 rounded-2xl shadow border">
+                <p className="text-xs text-gray-500 mb-1">Paid Orders</p>
+                <h3 className="text-2xl font-bold text-green-600">
+                  {stats.paidOrders}
                 </h3>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Pending payments: {stats.pendingPayments}
+                </p>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl shadow border">
+                <p className="text-xs text-gray-500 mb-1">Total Revenue</p>
+                <h3 className="text-2xl font-bold text-pink-600">
+                  {formatMoney(stats.totalRevenue)}
+                </h3>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Today: {formatMoney(stats.todaysRevenue)}
+                </p>
               </div>
             </div>
           </div>
@@ -256,10 +405,15 @@ export default function OwnerDashboard() {
         {/* ------------------ PRODUCTS ------------------ */}
         {active === "products" && (
           <div>
-            <div className="flex justify-between mb-5">
-              <h2 className="text-3xl font-bold">Menu Items</h2>
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h2 className="text-3xl font-bold">Menu Items</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Add, edit or remove products from your bakery menu.
+                </p>
+              </div>
               <button
-                className="bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                className="bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow hover:bg-pink-700"
                 onClick={() => {
                   setEditProduct({
                     name: "",
@@ -277,181 +431,569 @@ export default function OwnerDashboard() {
             </div>
 
             {/* PRODUCT LIST */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((p) => (
-                <div
-                  key={p._id}
-                  className="bg-white p-5 rounded-xl border shadow hover:shadow-lg transition"
-                >
-                  <img
-                    src={p.imageUrl || "https://via.placeholder.com/300"}
-                    className="w-full h-40 object-cover rounded-lg mb-3"
-                    alt=""
-                  />
-                  <h3 className="text-xl font-semibold">{p.name}</h3>
-                  <p className="text-gray-500 text-sm">{p.description}</p>
+            {products.length === 0 ? (
+              <div className="bg-white p-8 rounded-2xl border text-center text-gray-500">
+                No products added yet. Click{" "}
+                <span className="font-semibold text-pink-600">“Add Item”</span>{" "}
+                to create your first menu item.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((p) => (
+                  <div
+                    key={p._id}
+                    className="bg-white p-5 rounded-2xl border shadow hover:shadow-lg transition"
+                  >
+                    <img
+                      src={
+                        p.imageUrl ||
+                        "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600"
+                      }
+                      className="w-full h-40 object-cover rounded-xl mb-3"
+                      alt={p.name}
+                    />
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {p.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                          {p.description || "No description"}
+                        </p>
+                      </div>
+                      {p.isSoldOut && (
+                        <span className="text-[11px] px-2 py-1 bg-red-100 text-red-600 rounded-full">
+                          Sold Out
+                        </span>
+                      )}
+                    </div>
 
-                  <p className="text-lg font-bold text-pink-600 mt-2">
-                    ₹{p.price}
-                  </p>
+                    <div className="flex justify-between items-center mt-4">
+                      <span className="text-lg font-bold text-pink-600">
+                        ₹{p.price}
+                      </span>
+                      <span className="text-[11px] px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                        {p.category || "Uncategorized"}
+                      </span>
+                    </div>
 
-                  <span className="text-sm px-2 py-1 bg-purple-200 text-purple-700 rounded-full">
-                    {p.category}
-                  </span>
-
-                  <div className="flex justify-between mt-4">
-                    <button
-                      onClick={() => {
-                        setEditProduct(p);
-                        setShowModal(true);
-                      }}
-                      className="text-blue-600"
-                    >
-                      <Edit3 />
-                    </button>
-                    <button
-                      onClick={() => deleteProduct(p._id)}
-                      className="text-red-500"
-                    >
-                      <Trash2 />
-                    </button>
+                    <div className="flex justify-between mt-4 text-sm">
+                      <button
+                        onClick={() => {
+                          setEditProduct(p);
+                          setShowModal(true);
+                        }}
+                        className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                      >
+                        <Edit3 size={16} /> Edit
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(p._id)}
+                        className="flex items-center gap-1 text-red-500 hover:text-red-600"
+                      >
+                        <Trash2 size={16} /> Delete
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* ------------------ ORDERS ------------------ */}
         {active === "orders" && (
           <div>
-            <h2 className="text-3xl font-bold mb-6">Orders</h2>
-
-            {orders.map((o) => (
-              <div
-                key={o._id}
-                className="bg-white p-5 rounded-xl border shadow mb-4"
-              >
-                <h3 className="text-xl font-bold">Order #{o._id.slice(-6)}</h3>
-
-                <p className="text-gray-500">Total: ₹{o.total}</p>
-
-                <div className="mt-2">
-                  {o.items.map((i) => (
-                    <p key={i.name}>
-                      {i.qty} × {i.name}
-                    </p>
-                  ))}
-                </div>
-
-                <select
-                  className="mt-4 p-2 border rounded"
-                  value={o.status}
-                  onChange={(e) => updateOrderStatus(o._id, e.target.value)}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="completed">Completed</option>
-                </select>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-3xl font-bold">Orders</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Manage your orders and update payment status.
+                </p>
               </div>
-            ))}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setOrderFilter("all")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
+                    orderFilter === "all"
+                      ? "bg-pink-600 text-white border-pink-600"
+                      : "bg-white text-gray-700 border-gray-200"
+                  }`}
+                >
+                  All
+                </button>
+
+                <button
+                  onClick={() => setOrderFilter("paid")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
+                    orderFilter === "paid"
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-white text-gray-700 border-gray-200"
+                  }`}
+                >
+                  Paid
+                </button>
+
+                <button
+                  onClick={() => setOrderFilter("pending")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
+                    orderFilter === "pending"
+                      ? "bg-amber-500 text-white border-amber-500"
+                      : "bg-white text-gray-700 border-gray-200"
+                  }`}
+                >
+                  Pending Payment
+                </button>
+              </div>
+            </div>
+
+            {filteredOrders.length === 0 ? (
+              <div className="bg-white p-8 rounded-2xl border text-center text-gray-500">
+                No orders available.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredOrders.map((o) => {
+                  const isPaid = o.paymentStatus === "paid";
+                  const amount =
+                    typeof o.paidAmount === "number" && !isNaN(o.paidAmount)
+                      ? o.paidAmount
+                      : o.total || 0;
+
+                  return (
+                    <div
+                      key={o._id}
+                      className="bg-white p-5 rounded-2xl border shadow-sm hover:shadow-md transition"
+                    >
+                      {/* ORDER HEADER */}
+                      <div className="flex flex-col md:flex-row justify-between md:items-center gap-3">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Order #{o._id.slice(-6)}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Placed on {formatDateTime(o.createdAt)}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {/* Order Status Badge */}
+                          <span
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                              o.status === "completed"
+                                ? "bg-green-100 text-green-700"
+                                : o.status === "ready"
+                                ? "bg-purple-100 text-purple-700"
+                                : o.status === "confirmed"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {o.status.toUpperCase()}
+                          </span>
+
+                          {/* Payment Badge */}
+                          <span
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                              o.paymentStatus === "paid"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}
+                          >
+                            {o.paymentStatus === "paid"
+                              ? "PAID"
+                              : "PENDING PAYMENT"}
+                          </span>
+
+                          {/* Payment Method */}
+                          {o.paymentMethod && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              Method: {o.paymentMethod.toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* ITEMS */}
+                      <div className="mt-4 border-t border-pink-50 pt-3">
+                        {o.items.map((i, idx) => (
+                          <div
+                            key={idx}
+                            className="flex justify-between text-sm text-gray-800"
+                          >
+                            <span>
+                              {i.qty} × {i.name}
+                            </span>
+                            <span>₹{i.qty * i.price}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* CUSTOMER DETAILS */}
+                      <div className="mt-4 bg-gray-50 p-4 rounded-xl">
+                        <h3 className="text-sm font-semibold text-gray-800 mb-2">
+                          Customer Details
+                        </h3>
+
+                        <p className="text-sm text-gray-700">
+                          <span className="font-semibold">Name:</span>{" "}
+                          {o.customerId?.name || "N/A"}
+                        </p>
+
+                        <p className="text-sm text-gray-700 mt-1">
+                          <span className="font-semibold">Email:</span>{" "}
+                          {o.customerId?.email || "N/A"}
+                        </p>
+
+                        <p className="text-sm text-gray-700 mt-1">
+                          <span className="font-semibold">Phone:</span>{" "}
+                          {o.phone}
+                        </p>
+
+                        <p className="text-sm text-gray-700 mt-1">
+                          <span className="font-semibold">Address:</span>{" "}
+                          {o.address}
+                        </p>
+                      </div>
+
+                      {/* ORDER TOTAL */}
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-500">Order Total</p>
+                        <p className="text-xl font-bold text-pink-600">
+                          ₹{o.total}
+                        </p>
+
+                        {o.paymentStatus === "paid" && (
+                          <p className="text-xs text-green-600 mt-1">
+                            Paid: ₹
+                            {typeof o.paidAmount === "number"
+                              ? o.paidAmount
+                              : o.total}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* STATUS + PAYMENT UPDATE */}
+                      <div className="mt-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        {/* Payment Update */}
+                        <div>
+                          <label className="text-sm text-gray-600">
+                            Payment Status:
+                          </label>
+                          <select
+                            className="p-2 border rounded-lg ml-2 text-sm"
+                            value={o.paymentStatus}
+                            onChange={async (e) => {
+                              await axios.put(
+                                `http://localhost:5000/api/orders/update-payment/${o._id}`,
+                                { paymentStatus: e.target.value },
+                                {
+                                  headers: { Authorization: `Bearer ${token}` },
+                                }
+                              );
+                              loadOrders();
+                            }}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                          </select>
+                        </div>
+
+                        {/* Order Status */}
+                        <div>
+                          <label className="text-sm text-gray-600">
+                            Order Status:
+                          </label>
+                          <select
+                            className="p-2 border rounded-lg ml-2 text-sm"
+                            value={o.status}
+                            onChange={(e) =>
+                              updateOrderStatus(o._id, e.target.value)
+                            }
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="ready">Ready</option>
+                            <option value="completed">Completed</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
         {/* ------------------ ANALYTICS ------------------ */}
         {active === "analytics" && (
           <div>
-            <h2 className="text-3xl font-bold mb-6">Analytics</h2>
-            <p>Total Revenue: ₹{analytics?.totalRevenue || 0}</p>
-            <p>Total Orders: {analytics?.totalOrders || 0}</p>
+            <h2 className="text-3xl font-bold mb-2">Analytics</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Payment overview, today’s performance and top-selling items.
+            </p>
+
+            {/* Top summary cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white p-5 rounded-2xl border shadow-sm">
+                <p className="text-xs text-gray-500">Today&apos;s Orders</p>
+                <h3 className="text-2xl font-bold">
+                  {stats.todaysOrdersCount}
+                </h3>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Out of {stats.totalOrders} total orders.
+                </p>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border shadow-sm">
+                <p className="text-xs text-gray-500">Today&apos;s Revenue</p>
+                <h3 className="text-2xl font-bold text-pink-600">
+                  {formatMoney(stats.todaysRevenue)}
+                </h3>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Based on paid orders only.
+                </p>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border shadow-sm">
+                <p className="text-xs text-gray-500">Top Item</p>
+                {stats.itemRevenue[0] ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {stats.itemRevenue[0].name}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Sold {stats.itemRevenue[0].qty} pcs •{" "}
+                      {formatMoney(stats.itemRevenue[0].revenue)}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500 mt-2">
+                    No item data yet.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Two columns: Top orders today + Item revenue */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Top Orders Today */}
+              <div className="bg-white p-5 rounded-2xl border shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Top Orders Today
+                </h3>
+                {stats.topTodayOrders.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    No orders placed today yet.
+                  </p>
+                ) : (
+                  <div className="space-y-3 text-sm">
+                    {stats.topTodayOrders.map((o) => {
+                      const amount =
+                        typeof o.paidAmount === "number" && !isNaN(o.paidAmount)
+                          ? o.paidAmount
+                          : o.total || 0;
+                      return (
+                        <div
+                          key={o._id}
+                          className="flex justify-between items-center border-b border-gray-100 pb-2"
+                        >
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              Order #{o._id.slice(-6)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatDateTime(o.createdAt)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-pink-600">
+                              {formatMoney(amount)}
+                            </p>
+                            <p className="text-[11px] text-gray-500">
+                              {o.paymentStatus === "paid" ? "Paid" : "Pending"}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Item-wise revenue */}
+              <div className="bg-white p-5 rounded-2xl border shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Item-wise Revenue
+                </h3>
+                {stats.itemRevenue.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    No item revenue data yet.
+                  </p>
+                ) : (
+                  <div className="max-h-72 overflow-y-auto text-sm">
+                    <table className="w-full text-left text-xs md:text-sm">
+                      <thead>
+                        <tr className="text-gray-500 border-b">
+                          <th className="py-2 pr-2 font-medium">Item</th>
+                          <th className="py-2 px-2 font-medium text-right">
+                            Qty
+                          </th>
+                          <th className="py-2 pl-2 font-medium text-right">
+                            Revenue
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stats.itemRevenue.map((row) => (
+                          <tr
+                            key={row.name}
+                            className="border-b last:border-b-0"
+                          >
+                            <td className="py-2 pr-2">{row.name}</td>
+                            <td className="py-2 px-2 text-right">{row.qty}</td>
+                            <td className="py-2 pl-2 text-right">
+                              {formatMoney(row.revenue)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
         {/* ------------------ SETTINGS ------------------ */}
         {active === "settings" && (
           <div>
-            <h2 className="text-3xl font-bold mb-6">Settings</h2>
-            <p>Coming soon...</p>
+            <h2 className="text-3xl font-bold mb-2">Settings</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Basic settings for your owner account & bakery.
+            </p>
+
+            <div className="bg-white p-6 rounded-2xl border shadow-sm text-sm text-gray-600">
+              <p>
+                You can extend this section later with options like updating
+                bakery details, changing password, notification preferences,
+                etc.
+              </p>
+            </div>
           </div>
         )}
       </main>
 
       {/* PRODUCT MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-8 rounded-xl w-96">
-            <h3 className="text-2xl font-bold mb-4">
-              {editProduct._id ? "Edit Item" : "Add Item"}
-            </h3>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">
+              {editProduct._id ? "Edit Menu Item" : "Add Menu Item"}
+            </h2>
 
-            <input
-              className="w-full p-2 border rounded mb-2"
-              placeholder="Name"
-              value={editProduct.name}
-              onChange={(e) =>
-                setEditProduct({ ...editProduct, name: e.target.value })
-              }
-            />
+            <div className="space-y-3 text-sm">
+              <div>
+                <label className="block text-gray-700 mb-1">Name</label>
+                <input
+                  className="w-full border rounded-lg p-2"
+                  value={editProduct.name}
+                  onChange={(e) =>
+                    setEditProduct({ ...editProduct, name: e.target.value })
+                  }
+                />
+              </div>
 
-            <textarea
-              className="w-full p-2 border rounded mb-2"
-              placeholder="Description"
-              value={editProduct.description}
-              onChange={(e) =>
-                setEditProduct({ ...editProduct, description: e.target.value })
-              }
-            />
+              <div>
+                <label className="block text-gray-700 mb-1">Description</label>
+                <textarea
+                  className="w-full border rounded-lg p-2 h-20"
+                  value={editProduct.description}
+                  onChange={(e) =>
+                    setEditProduct({
+                      ...editProduct,
+                      description: e.target.value,
+                    })
+                  }
+                />
+              </div>
 
-            <input
-              className="w-full p-2 border rounded mb-2"
-              placeholder="Price"
-              type="number"
-              value={editProduct.price}
-              onChange={(e) =>
-                setEditProduct({ ...editProduct, price: e.target.value })
-              }
-            />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-gray-700 mb-1">Price (₹)</label>
+                  <input
+                    type="number"
+                    className="w-full border rounded-lg p-2"
+                    value={editProduct.price}
+                    onChange={(e) =>
+                      setEditProduct({
+                        ...editProduct,
+                        price: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1">Category</label>
+                  <input
+                    className="w-full border rounded-lg p-2"
+                    value={editProduct.category}
+                    onChange={(e) =>
+                      setEditProduct({
+                        ...editProduct,
+                        category: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
 
-            <input
-              className="w-full p-2 border rounded mb-2"
-              placeholder="Image URL"
-              value={editProduct.imageUrl}
-              onChange={(e) =>
-                setEditProduct({ ...editProduct, imageUrl: e.target.value })
-              }
-            />
+              <div>
+                <label className="block text-gray-700 mb-1">Image URL</label>
+                <input
+                  className="w-full border rounded-lg p-2"
+                  value={editProduct.imageUrl}
+                  onChange={(e) =>
+                    setEditProduct({
+                      ...editProduct,
+                      imageUrl: e.target.value,
+                    })
+                  }
+                />
+              </div>
 
-            {/* CATEGORY DROPDOWN */}
-            <select
-              className="w-full p-2 border rounded mb-4"
-              value={editProduct.category}
-              onChange={(e) =>
-                setEditProduct({ ...editProduct, category: e.target.value })
-              }
-            >
-              <option>Cakes</option>
-              <option>Pastries</option>
-              <option>Breads</option>
-              <option>Cookies</option>
-              <option>Snacks</option>
-              <option>Beverages</option>
-              <option>Uncategorized</option>
-            </select>
+              <label className="inline-flex items-center gap-2 mt-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={editProduct.isSoldOut}
+                  onChange={(e) =>
+                    setEditProduct({
+                      ...editProduct,
+                      isSoldOut: e.target.checked,
+                    })
+                  }
+                />
+                Mark as Sold Out
+              </label>
+            </div>
 
-            {/* SAVE BUTTON */}
-            <button
-              className="bg-pink-600 text-white w-full py-2 rounded-lg"
-              onClick={saveProduct}
-            >
-              Save
-            </button>
-
-            <button
-              className="mt-3 text-gray-600 w-full"
-              onClick={() => setShowModal(false)}
-            >
-              Cancel
-            </button>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 text-sm rounded-lg border border-gray-300 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveProduct}
+                className="px-4 py-2 text-sm rounded-lg bg-pink-600 text-white hover:bg-pink-700 shadow-sm"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}

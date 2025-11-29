@@ -191,6 +191,12 @@ export default function MyOrders() {
                     >
                       Track Order <ChevronRight size={18} />
                     </button>
+                    <button
+                      onClick={() => navigate(`/invoice/${order._id}`)}
+                      className="flex items-center gap-2 bg-white border border-pink-400 px-5 py-2 rounded-xl hover:bg-pink-50 transition"
+                    >
+                      View Invoice
+                    </button>
 
                     <button
                       onClick={() => alert("Reorder feature coming soon")}
