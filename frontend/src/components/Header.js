@@ -1,269 +1,143 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { useCart } from "../context/CartContext";
-
-import {
-  Store,
-  User,
-  LogOut,
-  ShoppingBag,
-  Menu,
-  X,
-  ChevronDown,
-} from "lucide-react";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronDown, User } from "lucide-react";
 
 export default function Header() {
-  const navigate = useNavigate();
-  const { cart } = useCart();
-
-  const role = localStorage.getItem("role");
-  const name = localStorage.getItem("name");
-  const username = name ? name.split(" ")[0] : "User";
-  const isLoggedIn = !!role;
-
   const [openProfile, setOpenProfile] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpenProfile(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  const username = localStorage.getItem("name");
+  const role = localStorage.getItem("role");
+  const token = localStorage.getItem("token");
 
-  const handleLogout = () => {
+  const navigate = useNavigate();
+
+  const logout = () => {
     localStorage.clear();
-    navigate("/");
-    window.location.reload();
+    navigate("/login");
   };
 
-  const navLinkClass = ({ isActive }) =>
-    `px-4 py-2 rounded-lg text-sm tracking-wide ${
-      isActive
-        ? "bg-white/90 text-pink-700 shadow font-semibold"
-        : "text-white/90 hover:bg-white/20 transition"
-    }`;
-
   return (
-    <>
-      {/* TOP NAVBAR */}
-      <header className="bg-gradient-to-r from-rose-500 via-pink-500 to-fuchsia-500 shadow-lg sticky top-0 z-50">
-        <nav className="max-w-7xl mx-auto px-5 py-3 flex items-center gap-5">
-          {/* LOGO */}
-          <Link to="/" className="flex items-center gap-2 text-white">
-            <Store size={28} strokeWidth={1.5} />
-            <span className="font-bold tracking-wide text-xl">BakeHub</span>
-          </Link>
+    <header
+      className="bg-gradient-to-r from-pink-500 to-pink-600 shadow-md py-4 px-6 
+      flex justify-between items-center text-white sticky top-0 z-50"
+    >
+      {/* LOGO */}
+      <Link to="/" className="text-2xl font-bold tracking-wide">
+        BakeHub
+      </Link>
 
-          {/* DESKTOP MENU */}
-          <div className="hidden md:flex items-center gap-4 ml-auto">
-            <NavLink to="/" className={navLinkClass}>
-              Home
-            </NavLink>
+      {/* CENTER NAVIGATION LINKS */}
+      <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+        <Link to="/" className="hover:text-pink-200 transition">
+          Home
+        </Link>
+        <Link to="/about" className="hover:text-pink-200 transition">
+          About
+        </Link>
+        <Link to="/contact" className="hover:text-pink-200 transition">
+          Contact
+        </Link>
 
-            <NavLink to="/customer" className={navLinkClass}>
-              Browse
-            </NavLink>
-
-            <NavLink to="/about" className={navLinkClass}>
-              About
-            </NavLink>
-
-            <NavLink to="/contact" className={navLinkClass}>
-              Contact
-            </NavLink>
-
-            {/* CUSTOMER LINK */}
-            {role === "customer" && (
-              <NavLink to="/orders" className={navLinkClass}>
-                My Orders
-              </NavLink>
-            )}
-
-            {/* OWNER LINK */}
-            {role === "owner" && (
-              <NavLink to="/owner" className={navLinkClass}>
-                Dashboard
-              </NavLink>
-            )}
-
-            {/* ADMIN LINK */}
-            {role === "admin" && (
-              <NavLink to="/admin" className={navLinkClass}>
-                Admin Panel
-              </NavLink>
-            )}
-
-            {/* CART (Customers only) */}
-            {role === "customer" && (
-              <div
-                onClick={() => navigate("/cart")}
-                className="relative cursor-pointer text-white hover:text-white/90"
-              >
-                <ShoppingBag size={25} />
-                {cart.length > 0 && (
-                  <span className="absolute -top-2 -right-2 text-[10px] bg-white text-pink-600 px-2 py-[1px] rounded-full">
-                    {cart.length}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* PROFILE DROPDOWN */}
-            {isLoggedIn ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setOpenProfile((prev) => !prev)}
-                  className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-lg text-white hover:bg-white/20 transition"
-                >
-                  <div className="w-8 h-8 bg-white text-pink-700 rounded-full flex items-center justify-center font-bold">
-                    {username.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="font-medium">{username}</span>
-                  <ChevronDown size={16} />
-                </button>
-
-                {openProfile && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-pink-100 py-2 text-sm z-50">
-                    {/* Profile */}
-                    <button
-                      onClick={() => navigate("/profile")}
-                      className="w-full text-left px-4 py-2 hover:bg-pink-50"
-                    >
-                      My Profile
-                    </button>
-
-                    {/* SETTINGS — ROLE-BASED */}
-                    <button
-                      onClick={() => {
-                        if (role === "owner") navigate("/owner/settings");
-                        else if (role === "admin") navigate("/admin/settings");
-                        else navigate("/settings");
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-pink-50 text-gray-700"
-                    >
-                      Settings
-                    </button>
-
-                    {/* LOGOUT */}
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 hover:bg-pink-50 text-red-600 flex items-center gap-2"
-                    >
-                      <LogOut size={16} /> Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <NavLink to="/login" className={navLinkClass}>
-                <User size={16} /> Login
-              </NavLink>
-            )}
-          </div>
-
-          {/* MOBILE MENU BUTTON */}
-          <button
-            className="md:hidden ml-auto text-white"
-            onClick={() => setMenuOpen(true)}
-          >
-            <Menu size={30} />
-          </button>
-        </nav>
-      </header>
-
-      {/* MOBILE OVERLAY */}
-      {menuOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
-
-      {/* MOBILE SIDEBAR */}
-      <div
-        className={`fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-50 p-6 transform transition-transform duration-300 ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <button
-          className="absolute top-4 right-4 text-pink-600"
-          onClick={() => setMenuOpen(false)}
-        >
-          <X size={28} />
-        </button>
-
-        <h2 className="text-3xl font-bold text-pink-600 mb-6">Menu</h2>
-
-        <div className="flex flex-col gap-6 text-lg font-semibold text-gray-700">
-          <Link to="/" onClick={() => setMenuOpen(false)}>
-            Home
-          </Link>
-
-          <Link to="/customer" onClick={() => setMenuOpen(false)}>
+        {/* CUSTOMER ONLY → SHOW "Browse" */}
+        {token && role === "customer" && (
+          <Link to="/customer" className="hover:text-pink-200 transition">
             Browse
           </Link>
+        )}
 
-          <Link to="/about" onClick={() => setMenuOpen(false)}>
-            About
-          </Link>
-
-          <Link to="/contact" onClick={() => setMenuOpen(false)}>
-            Contact
-          </Link>
-
-          {role === "customer" && (
-            <Link to="/orders" onClick={() => setMenuOpen(false)}>
-              My Orders
-            </Link>
-          )}
-
-          {role === "owner" && (
-            <Link to="/owner" onClick={() => setMenuOpen(false)}>
-              Owner Dashboard
-            </Link>
-          )}
-
-          {role === "admin" && (
-            <Link to="/admin" onClick={() => setMenuOpen(false)}>
-              Admin Panel
-            </Link>
-          )}
-
-          {/* Settings – mobile */}
+        {/* OWNER DASHBOARD */}
+        {token && role === "owner" && (
           <Link
-            onClick={() => {
-              if (role === "owner") navigate("/owner/settings");
-              else if (role === "admin") navigate("/admin/settings");
-              else navigate("/settings");
-              setMenuOpen(false);
-            }}
+            to="/owner/dashboard"
+            className="hover:text-pink-200 transition"
           >
-            Settings
+            Dashboard
           </Link>
+        )}
 
-          {/* LOGIN / LOGOUT */}
-          {!isLoggedIn ? (
+        {/* ADMIN PANEL */}
+        {token && role === "admin" && (
+          <Link
+            to="/admin/dashboard"
+            className="hover:text-pink-200 transition"
+          >
+            Admin Panel
+          </Link>
+        )}
+      </nav>
+
+      {/* RIGHT SIDE */}
+      <div className="flex items-center gap-6">
+        {/* BEFORE LOGIN → LOGIN BUTTON */}
+        {!token && (
+          <button
+            onClick={() => navigate("/login")}
+            className="px-5 py-2 bg-white text-pink-600 rounded-xl font-semibold shadow 
+            hover:bg-pink-50 transition"
+          >
+            Login
+          </button>
+        )}
+
+        {/* AFTER LOGIN → PROFILE DROPDOWN */}
+        {token && (
+          <div className="relative">
             <button
-              onClick={() => navigate("/login")}
-              className="bg-pink-600 text-white px-5 py-2 rounded-full shadow-md mt-4 hover:bg-pink-700 flex items-center gap-2"
+              onClick={() => setOpenProfile((prev) => !prev)}
+              className="flex items-center gap-2 bg-white/15 px-4 py-2 rounded-xl text-white 
+              hover:bg-white/25 transition font-semibold"
             >
-              <User size={20} /> Login
+              <User size={18} />
+              {username}
+              <ChevronDown size={16} />
             </button>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="flex mt-4 items-center gap-2 text-pink-600 hover:text-pink-700 font-medium"
-            >
-              <LogOut size={22} /> Logout
-            </button>
-          )}
-        </div>
+
+            {/* DROPDOWN MENU */}
+            {openProfile && (
+              <div
+                className="absolute right-0 mt-3 w-48 bg-white text-gray-800 shadow-xl 
+                rounded-xl overflow-hidden border border-gray-100"
+              >
+                {/* My Profile */}
+                <button
+                  onClick={() => {
+                    setOpenProfile(false);
+
+                    if (role === "customer") navigate("/profile");
+                    if (role === "owner") navigate("/owner/profile");
+                    if (role === "admin") navigate("/admin/profile");
+                  }}
+                  className="w-full text-left px-4 py-3 hover:bg-pink-50 transition"
+                >
+                  My Profile
+                </button>
+
+                {/* Settings */}
+                <button
+                  onClick={() => {
+                    setOpenProfile(false);
+
+                    if (role === "customer") navigate("/settings");
+                    if (role === "owner") navigate("/owner/settings");
+                    if (role === "admin") navigate("/admin/settings");
+                  }}
+                  className="w-full text-left px-4 py-3 hover:bg-pink-50 transition"
+                >
+                  Settings
+                </button>
+
+                {/* Logout */}
+                <button
+                  onClick={logout}
+                  className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-600 transition"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </>
+    </header>
   );
 }
