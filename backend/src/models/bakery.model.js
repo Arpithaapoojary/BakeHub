@@ -15,6 +15,11 @@ const bakerySchema = new mongoose.Schema(
       default:
         "https://images.unsplash.com/photo-1542831371-d531d36971e6?auto=format&fit=crop&w=800&q=80",
     },
+
+    // ⭐ ADD THESE
+    lat: { type: Number },
+    lng: { type: Number },
+
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -23,5 +28,6 @@ const bakerySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 
 export default mongoose.model("Bakery", bakerySchema);

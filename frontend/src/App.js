@@ -33,7 +33,6 @@ import AdminSettings from "./pages/admin/AdminSettings";
 
 import MyProfile from "./pages/common/MyProfile";
 
-
 import { CartProvider } from "./context/CartContext";
 
 export default function App() {
@@ -54,11 +53,13 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              
+
               <Route path="/settings" element={<Settings />} />
 
+              {/* COMMON PROFILE PAGE FOR ALL ROLES */}
               <Route path="/profile" element={<MyProfile />} />
-
+              <Route path="/owner/profile" element={<MyProfile />} />
+              <Route path="/admin/profile" element={<MyProfile />} />
 
               <Route
                 path="/reset-password/:token"
@@ -83,9 +84,6 @@ export default function App() {
 
               {/* Owner */}
               <Route path="/owner" element={<OwnerDashboard />} />
-
-            
-
 
               {/* Admin */}
               <Route path="/admin" element={<AdminDashboard />} />
