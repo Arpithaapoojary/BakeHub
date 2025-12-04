@@ -1,89 +1,135 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Store, ShoppingBag, ShieldCheck, Layers } from "lucide-react";
+import { Store, ShoppingBag, ShieldCheck } from "lucide-react";
 
 export default function HomePage() {
   return (
     <div className="bg-[#FFF5FA] min-h-screen overflow-hidden">
-      {/* ============= HERO ============= */}
-      <section className="px-6 py-20 md:py-24 relative">
-        {/* Background gradient circles */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.3, scale: 1 }}
-          transition={{ duration: 1.2 }}
-          className="absolute -top-20 -right-20 w-72 h-72 bg-pink-300 rounded-full blur-3xl opacity-40"
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 0.35, scale: 1 }}
-          transition={{ duration: 1.4 }}
-          className="absolute bottom-0 -left-16 w-64 h-64 bg-pink-100 rounded-full blur-3xl opacity-40"
-        />
+      {/* ====================== HERO SECTION ====================== */}
+      <section className="px-6 py-24 md:py-32 relative">
+        {/* Background Glow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0.1, scale: 0.8 }}
+            animate={{ opacity: 0.25, scale: 1 }}
+            transition={{ duration: 1.3 }}
+            className="absolute top-0 right-0 w-96 h-96 bg-pink-300 rounded-full blur-[120px]"
+          />
+          <motion.div
+            initial={{ opacity: 0.1, scale: 0.7 }}
+            animate={{ opacity: 0.25, scale: 1 }}
+            transition={{ duration: 1.6 }}
+            className="absolute bottom-0 left-0 w-80 h-80 bg-pink-200 rounded-full blur-[120px]"
+          />
+        </div>
 
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center relative z-10">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-20 items-center relative z-10">
           {/* LEFT TEXT */}
           <motion.div
             initial={{ x: -40, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.9 }}
             className="space-y-6"
           >
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-[#1F1022]">
-              Discover Fresh Bakeries
-              <span className="text-pink-600 block">Near You</span>
+            <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-[#1F1022] tracking-tight">
+              Fresh Bakes, Happy Moments —
+              <span className="text-pink-600 block">
+                Delivered Straight to You.
+              </span>
             </h1>
 
-            <p className="text-base md:text-lg text-[#5b405f] max-w-xl">
-              Browse bakery listings instantly without login. Sign in only when
-              you want to see menus or place orders.
+            <p className="text-base md:text-lg text-[#5b405f] max-w-lg leading-relaxed">
+              Craving something sweet? Discover the best bakeries around you,
+              explore menus full of magic, and let BakeHub turn your cravings
+              into happiness — one delicious bite at a time.
             </p>
 
-            <div className="flex gap-4">
+            {/* BUTTONS */}
+            <div className="flex gap-4 flex-wrap mt-8">
+              {/* Customer Login */}
               <motion.div whileHover={{ scale: 1.05 }}>
                 <Link
-                  to="/customer"
-                  className="px-6 py-3 bg-pink-600 text-white rounded-xl font-semibold shadow-md hover:bg-pink-700 transition"
+                  to="/login?role=customer"
+                  className="px-7 py-3 bg-pink-600 text-white rounded-xl font-semibold shadow-lg hover:bg-pink-700 transition"
                 >
-                  Browse Bakeries
+                  I’m Here to Eat 😋
                 </Link>
               </motion.div>
 
+              {/* Owner Login */}
               <motion.div whileHover={{ scale: 1.05 }}>
                 <Link
-                  to="/register?role=owner"
-                  className="px-6 py-3 bg-white border border-pink-200 text-pink-700 rounded-xl hover:bg-pink-50 transition"
+                  to="/login?role=owner"
+                  className="px-7 py-3 bg-white border border-pink-200 text-pink-700 rounded-xl font-semibold shadow hover:bg-pink-50 transition"
                 >
-                  Register Bakery
+                  I’m Here to Bake 🍞
                 </Link>
               </motion.div>
             </div>
           </motion.div>
 
-          {/* ANIMATED FLOATING CARDS */}
-          <div className="grid gap-4">
+          {/* RIGHT FLOATING CARDS */}
+          <div className="grid gap-5">
             <FloatingCard
-              title="Easy Discovery"
-              text="Find nearby bakeries without login."
+              title="Find Your Flavour"
+              text="Explore bakeries that match your cravings and mood."
               delay={0.2}
             />
             <FloatingCard
-              title="Admin Verified"
-              text="Only approved bakeries can publish items."
+              title="Bakers You Can Trust"
+              text="Every bakery is approved — only real, quality creators here."
               delay={0.4}
             />
             <FloatingCard
-              title="Smooth Ordering"
-              text="Login to view menus & order quickly."
+              title="Order in a Tap"
+              text="See it. Want it. Get it. Your cravings handled effortlessly."
               delay={0.6}
             />
           </div>
         </div>
       </section>
 
-      {/* ============= WHY BAKEHUB ============= */}
-      <section className="py-16 px-6 bg-white border-t border-pink-100">
+      {/* ====================== ABOUT PLATFORM ====================== */}
+      <section className="py-20 px-6 bg-white text-center">
+        <motion.h2
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="text-3xl md:text-4xl font-extrabold text-gray-900"
+        >
+          Made for Food Lovers & the Artists Who Bake for Them
+        </motion.h2>
+
+        <div className="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto mt-14">
+          {/* CUSTOMER CARD */}
+          <RoleCard
+            title="Customer"
+            text="Explore, taste, repeat. Your next favorite dessert is waiting."
+            register="/register?role=customer"
+            login="/login?role=customer"
+          />
+
+          {/* OWNER CARD */}
+          <RoleCard
+            title="Bakery Owner"
+            text="Turn your passion into customers. Share your bakes with the world."
+            register="/register?role=owner"
+            login="/login?role=owner"
+          />
+
+          {/* ADMIN CARD */}
+          <RoleCard
+            title="Admin"
+            text="Ensuring only the best and real bakeries get featured."
+            login="/login?role=admin"
+            isAdmin
+          />
+        </div>
+      </section>
+
+      {/* ====================== WHY BAKEHUB ====================== */}
+      <section className="py-20 px-6 bg-[#FFF5FA] border-t border-pink-100">
         <div className="max-w-7xl mx-auto text-center">
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
@@ -91,61 +137,47 @@ export default function HomePage() {
             transition={{ duration: 0.7 }}
             className="text-3xl font-bold text-gray-900"
           >
-            Why Choose <span className="text-pink-600">BakeHub?</span>
+            Why People Love <span className="text-pink-600">BakeHub</span>
           </motion.h2>
 
-          <div className="grid md:grid-cols-3 gap-8 mt-12">
-            <FeatureCard
-              icon={<Store className="w-8 h-8 text-pink-500 mx-auto" />}
-              title="Browse Freely"
-              text="See bakeries without signing in."
+          <div className="grid md:grid-cols-3 gap-10 mt-14">
+            <FeatureBox
+              icon={<Store className="w-8 h-8 text-pink-600 mx-auto" />}
+              title="Roam the Bakery World"
+              text="No login needed — just scroll, explore, and find deliciousness."
             />
-            <FeatureCard
-              icon={<ShoppingBag className="w-8 h-8 text-pink-500 mx-auto" />}
-              title="For Bakery Owners"
-              text="Register, get approved & manage your shop."
+            <FeatureBox
+              icon={<ShoppingBag className="w-8 h-8 text-pink-600 mx-auto" />}
+              title="Your Bakery. Your Rules."
+              text="Owners get full control — menu, orders, customers & stories."
             />
-            <FeatureCard
-              icon={<ShieldCheck className="w-8 h-8 text-pink-500 mx-auto" />}
-              title="Verified Listings"
-              text="Only admin-approved bakeries go live."
+            <FeatureBox
+              icon={<ShieldCheck className="w-8 h-8 text-pink-600 mx-auto" />}
+              title="Only the Real Bakers"
+              text="Every bakery is hand-approved for quality & trust."
             />
           </div>
         </div>
       </section>
 
-      {/* ============= QUICK HIGHLIGHTS ============= */}
-      <section className="py-16 px-6 bg-[#FFF5FA]">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
-          <HighlightRow
-            icon={<Layers className="w-6 h-6 text-pink-500" />}
-            title="Real-Time Availability"
-            text="Owners update stock instantly."
-          />
-
-          <HighlightRow
-            icon={<ShoppingBag className="w-6 h-6 text-pink-500" />}
-            title="Order Tracking"
-            text="Get clear status updates after login."
-          />
-        </div>
-      </section>
-
-      {/* ============= CTA ============= */}
+      {/* ====================== CTA ====================== */}
       <section className="py-20 px-6 text-center bg-white border-t border-pink-100">
         <h2 className="text-3xl font-bold text-gray-900">
-          Your Bakery Journey Starts Here
+          Ready to Bake Something Big?
         </h2>
         <p className="text-gray-600 mt-3">
-          Explore bakeries or bring your own bakery online.
+          Join BakeHub and share your creations with your city.
         </p>
 
-        <motion.div className="mt-8" whileHover={{ scale: 1.05 }}>
+        <motion.div
+          className="mt-8 flex justify-center"
+          whileHover={{ scale: 1.03 }}
+        >
           <Link
-            to="/customer"
+            to="/register?role=owner"
             className="px-10 py-4 bg-pink-600 text-white rounded-xl text-lg font-semibold shadow hover:bg-pink-700 transition"
           >
-            Browse Bakeries →
+            Become a BakeHub Baker →
           </Link>
         </motion.div>
       </section>
@@ -153,47 +185,59 @@ export default function HomePage() {
   );
 }
 
-/* ================= SMALL COMPONENTS ================= */
+/* ============================================================= */
+/* ====================== COMPONENTS ============================ */
+/* ============================================================= */
 
 function FloatingCard({ title, text, delay }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 25 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay }}
-      whileHover={{ scale: 1.03 }}
-      className="bg-white p-5 border border-pink-200 rounded-xl shadow-sm"
+      transition={{ duration: 0.6, delay }}
+      className="bg-white p-6 rounded-xl shadow-md border border-pink-200 hover:shadow-lg transition"
     >
-      <h3 className="font-semibold text-[#2b1830]">{title}</h3>
+      <h3 className="font-bold text-[#2b1830] text-lg">{title}</h3>
       <p className="text-[#7a5a80] text-sm mt-1">{text}</p>
     </motion.div>
   );
 }
 
-function FeatureCard({ icon, title, text }) {
+function RoleCard({ title, text, register, login, isAdmin }) {
+  return (
+    <div className="p-6 bg-[#FFF5FA] rounded-2xl border shadow-sm hover:shadow-lg transition">
+      <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+      <p className="text-gray-600 mt-2">{text}</p>
+
+      <div className="flex flex-col gap-3 mt-5">
+        {!isAdmin && (
+          <Link
+            to={register}
+            className="w-full bg-pink-600 text-white py-2 rounded-lg font-semibold hover:bg-pink-700 transition"
+          >
+            Register
+          </Link>
+        )}
+        <Link
+          to={login}
+          className="w-full border py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
+        >
+          Login
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function FeatureBox({ icon, title, text }) {
   return (
     <motion.div
       whileHover={{ scale: 1.03 }}
-      className="bg-[#FFF5FA] p-7 rounded-2xl shadow-sm border border-pink-100 text-center"
+      className="bg-white p-7 rounded-2xl shadow-md border text-center"
     >
       {icon}
       <h3 className="font-semibold text-lg mt-3 text-gray-900">{title}</h3>
       <p className="text-sm text-gray-600 mt-2">{text}</p>
-    </motion.div>
-  );
-}
-
-function HighlightRow({ icon, title, text }) {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      className="flex gap-3 bg-white p-5 border border-pink-200 rounded-xl shadow-sm"
-    >
-      {icon}
-      <div>
-        <h3 className="font-semibold text-base">{title}</h3>
-        <p className="text-sm text-gray-600">{text}</p>
-      </div>
     </motion.div>
   );
 }

@@ -8,7 +8,11 @@ import Bakery from "../models/bakery.model.js";
 // ------------------ REGISTER CUSTOMER ------------------
 export const registerCustomer = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone } = req.body;
+
+    if (!name || !email || !password || !phone) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
 
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ error: "Email already exists" });
@@ -17,6 +21,7 @@ export const registerCustomer = async (req, res) => {
       name,
       email,
       password,
+      phone,
       role: "customer",
     });
 
@@ -26,31 +31,35 @@ export const registerCustomer = async (req, res) => {
   }
 };
 
+
 // ------------------ REGISTER OWNER ------------------
 export const registerOwner = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone, bakeryName, address } = req.body;
 
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ error: "Email already exists" });
 
+    // Create owner user with phone
     const user = await User.create({
       name,
       email,
       password,
+      phone,
       role: "owner",
     });
 
-    // ⭐ Auto-create bakery request
+    // Create bakery with actual values
     await Bakery.create({
-      name: `${name}'s Bakery`,
-      address: "Not provided",
+      name: bakeryName || `${name}'s Bakery`,
+      address: address || "",
+      phone: phone || "",
       ownerId: user._id,
       status: "pending",
     });
 
     res.json({
-      message: "Owner registered. Bakery approval request created.",
+      message: "Owner registered successfully. Bakery pending approval.",
       user,
     });
   } catch (err) {
@@ -79,13 +88,25 @@ export const registerAdmin = async (req, res) => {
   }
 };
 
-// ------------------ LOGIN ------------------
+// ------------------ LOGIN (STRICT ROLE VALIDATION) ------------------
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
+
+    if (!role) {
+      return res.status(400).json({ error: "Role is required" });
+    }
 
     const user = await User.findOne({ email }).select("+password");
+
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    // ❗ Block wrong role login
+    if (user.role !== role) {
+      return res.status(403).json({
+        error: `This account is registered as a ${user.role.toUpperCase()}, not ${role.toUpperCase()}`,
+      });
+    }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(400).json({ error: "Invalid password" });
@@ -96,10 +117,18 @@ export const login = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES }
     );
 
+    // Get bakery status if owner
+    let bakeryStatus = null;
+    if (user.role === "owner") {
+      const bakery = await Bakery.findOne({ ownerId: user._id });
+      bakeryStatus = bakery?.status ?? "pending";
+    }
+
     res.json({
       message: "Login success",
       token,
       role: user.role,
+      bakeryStatus,
       name: user.name,
       user: {
         _id: user._id,
@@ -108,10 +137,13 @@ export const login = async (req, res) => {
         role: user.role,
       },
     });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+
 
 // ------------------ FORGOT PASSWORD ------------------
 export const forgotPassword = async (req, res) => {

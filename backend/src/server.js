@@ -15,7 +15,7 @@ import analyticsRoutes from "./routes/analytics.routes.js";
 
 import userRoutes from "./routes/user.routes.js";
 
-
+import messageRoutes from "./routes/message.routes.js";
 
 const app = express();
 
@@ -67,7 +67,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
 
 app.use("/api/analytics", analyticsRoutes);
-
+app.use("/api/messages", messageRoutes);
 
 // 🚀 Start server
 const start = async () => {

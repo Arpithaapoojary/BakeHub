@@ -14,6 +14,7 @@ import OwnerDashboard from "./pages/owner/OwnerDashboard";
 import CustomerBrowse from "./pages/customer/CustomerBrowse";
 
 import Settings from "./pages/customer/Settings";
+import OwnerPending from "./pages/owner/OwnerPending";
 
 import CustomerMenu from "./pages/customer/CustomerMenu";
 import CartPage from "./pages/customer/CartPage";
@@ -84,6 +85,7 @@ export default function App() {
 
               {/* Owner */}
               <Route path="/owner" element={<OwnerDashboard />} />
+              <Route path="/owner/pending" element={<OwnerPending />} />
 
               {/* Admin */}
               <Route path="/admin" element={<AdminDashboard />} />

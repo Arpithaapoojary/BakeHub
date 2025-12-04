@@ -1,3 +1,5 @@
+// FIXED MyOrders.js
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -25,7 +27,9 @@ export default function MyOrders() {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setOrders(res.data);
+
+        // ✅ FIX — backend returns an array, not an object
+        setOrders(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error("Error fetching orders:", err);
       } finally {
@@ -58,7 +62,6 @@ export default function MyOrders() {
       </div>
     );
 
-  // ---------------- STATUS BADGES ----------------
   const getStatus = (status) => {
     switch (status) {
       case "pending":
@@ -97,7 +100,6 @@ export default function MyOrders() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white py-12 px-5">
       <div className="max-w-5xl mx-auto">
-        {/* HEADER */}
         <h1 className="text-4xl font-extrabold text-pink-600 mb-10">
           My Orders
         </h1>
@@ -112,7 +114,6 @@ export default function MyOrders() {
                 className="bg-white rounded-3xl shadow-xl border border-pink-100 p-8 hover:shadow-2xl transition-all animate-slideUp"
                 style={{ animationDelay: `${i * 0.05}s` }}
               >
-                {/* Order Header */}
                 <div className="flex justify-between flex-wrap gap-4 mb-5">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-800">
@@ -137,7 +138,6 @@ export default function MyOrders() {
                   </span>
                 </div>
 
-                {/* ITEMS CARD */}
                 <div className="bg-pink-50 rounded-2xl p-5">
                   <h3 className="font-semibold text-gray-800 mb-4">
                     Order Items
@@ -167,6 +167,7 @@ export default function MyOrders() {
                             </p>
                           </div>
                         </div>
+
                         <p className="font-semibold text-gray-900">
                           ₹{item.qty * item.price}
                         </p>
@@ -175,7 +176,6 @@ export default function MyOrders() {
                   </div>
                 </div>
 
-                {/* TOTAL + BUTTONS */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-6 gap-4">
                   <h3 className="text-xl font-bold text-gray-900">
                     Total:{" "}
@@ -191,6 +191,7 @@ export default function MyOrders() {
                     >
                       Track Order <ChevronRight size={18} />
                     </button>
+
                     <button
                       onClick={() => navigate(`/invoice/${order._id}`)}
                       className="flex items-center gap-2 bg-white border border-pink-400 px-5 py-2 rounded-xl hover:bg-pink-50 transition"

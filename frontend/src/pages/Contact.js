@@ -1,61 +1,128 @@
+import React, { useState } from "react";
+import axios from "axios";
+
 export default function Contact() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    category: "",
+    message: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+
+  const categories = [
+    "Support",
+    "Help",
+    "Complaint",
+    "Feedback",
+    "Technical Issue",
+  ];
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const submitForm = async (e) => {
+    e.preventDefault();
+
+    if (!form.name || !form.email || !form.category || !form.message) {
+      alert("All fields are required");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await axios.post("http://localhost:5000/api/messages", form);
+
+      setSuccessMsg("Your message has been sent successfully! Our team will get back to you.");
+      setForm({
+        name: "",
+        email: "",
+        category: "",
+        message: "",
+      });
+    } catch (err) {
+      alert("Failed to send message");
+    }
+
+    setLoading(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white pt-24 px-6 pb-20">
-      {/* Title */}
-      <h1 className="text-4xl md:text-5xl font-extrabold text-center text-pink-600 mb-6">
-        Contact Us
-      </h1>
+    <div className="min-h-screen bg-pink-50 flex items-center justify-center p-6">
+      <div className="bg-white shadow-xl p-10 rounded-3xl max-w-xl w-full">
+        <h2 className="text-3xl font-bold text-center text-pink-600 mb-6">
+          Contact Us
+        </h2>
 
-      <p className="text-gray-600 text-lg max-w-2xl mx-auto text-center leading-relaxed mb-12">
-        Have questions, feedback, or partnership ideas? We'd love to hear from
-        you.
-      </p>
+        {successMsg && (
+          <p className="bg-green-100 text-green-700 p-3 rounded-lg mb-4 text-center">
+            {successMsg}
+          </p>
+        )}
 
-      {/* Form Box */}
-      <div className="max-w-3xl mx-auto bg-white p-10 rounded-3xl shadow-md border border-pink-100">
-        <form className="space-y-6">
+        <form onSubmit={submitForm} className="space-y-5">
           {/* Name */}
           <div>
-            <label className="block mb-1 text-gray-700 font-semibold">
-              Your Name
-            </label>
+            <label className="text-sm font-semibold">Your Name</label>
             <input
               type="text"
-              placeholder="Enter your name"
-              className="w-full p-3 border border-pink-200 rounded-xl bg-white focus:outline-none"
+              name="name"
+              className="w-full mt-1 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
+              value={form.name}
+              onChange={handleChange}
             />
           </div>
 
           {/* Email */}
           <div>
-            <label className="block mb-1 text-gray-700 font-semibold">
-              Email Address
-            </label>
+            <label className="text-sm font-semibold">Email</label>
             <input
               type="email"
-              placeholder="Enter your email"
-              className="w-full p-3 border border-pink-200 rounded-xl bg-white focus:outline-none"
+              name="email"
+              className="w-full mt-1 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
+              value={form.email}
+              onChange={handleChange}
             />
+          </div>
+
+          {/* CATEGORY DROPDOWN — MATCHES ADMIN */}
+          <div>
+            <label className="text-sm font-semibold">Category</label>
+            <select
+              name="category"
+              className="w-full mt-1 p-3 border rounded-xl bg-white focus:ring-2 focus:ring-pink-400"
+              value={form.category}
+              onChange={handleChange}
+            >
+              <option value="">Select category</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Message */}
           <div>
-            <label className="block mb-1 text-gray-700 font-semibold">
-              Message
-            </label>
+            <label className="text-sm font-semibold">Message</label>
             <textarea
-              rows="5"
-              placeholder="Write your message..."
-              className="w-full p-3 border border-pink-200 rounded-xl bg-white resize-none focus:outline-none"
-            ></textarea>
+              name="message"
+              rows="4"
+              className="w-full mt-1 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
+              value={form.message}
+              onChange={handleChange}
+            />
           </div>
 
-          {/* Submit */}
           <button
-            type="submit"
-            className="w-full bg-pink-600 text-white py-3 rounded-xl font-semibold text-lg"
+            disabled={loading}
+            className="w-full bg-pink-600 text-white py-3 rounded-xl mt-4 text-lg font-semibold hover:bg-pink-700 transition"
           >
-            Send Message
+            {loading ? "Sending..." : "Send Message"}
           </button>
         </form>
       </div>

@@ -7,26 +7,34 @@ import {
   getOwnerOrders,
   updateOrderStatus,
   updatePaymentStatus,
+  getOrderById,
 } from "../controllers/order.controller.js";
-
-import { getOrderById } from "../controllers/order.controller.js";
-
 
 const router = express.Router();
 
-// Customer places an order
+// --------------------------------------------
+// CUSTOMER: PLACE ORDER
+// --------------------------------------------
 router.post("/", requireAuth, allowRoles("customer"), placeOrder);
 
-// Customer views their own orders
+// --------------------------------------------
+// CUSTOMER: VIEW MY ORDERS
+// --------------------------------------------
 router.get("/my-orders", requireAuth, allowRoles("customer"), getMyOrders);
 
-// Owner views orders for their bakery
+// --------------------------------------------
+// OWNER: VIEW ORDERS OF THEIR BAKERY
+// --------------------------------------------
 router.get("/owner-orders", requireAuth, allowRoles("owner"), getOwnerOrders);
 
-// Owner updates ORDER STATUS
+// --------------------------------------------
+// OWNER: UPDATE ORDER STATUS
+// --------------------------------------------
 router.put("/status/:id", requireAuth, allowRoles("owner"), updateOrderStatus);
 
-// Owner updates PAYMENT STATUS (COD → Paid)
+// --------------------------------------------
+// OWNER: UPDATE PAYMENT STATUS
+// --------------------------------------------
 router.put(
   "/update-payment/:id",
   requireAuth,
@@ -34,8 +42,14 @@ router.put(
   updatePaymentStatus
 );
 
-
-// Customer: Get single order (for invoice)
-router.get("/:id", requireAuth, allowRoles("customer"), getOrderById);
+// --------------------------------------------
+// TRACK ORDER (Customer + Owner allowed)
+// --------------------------------------------
+router.get(
+  "/:id",
+  requireAuth,
+  allowRoles("customer", "owner"), // ⭐ FIXED LINE
+  getOrderById
+);
 
 export default router;

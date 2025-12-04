@@ -1,38 +1,28 @@
 import Order from "../models/order.model.js";
 import Bakery from "../models/bakery.model.js";
-import User from "../models/user.model.js";
 
 // -----------------------------
 // CUSTOMER: PLACE ORDER
 // -----------------------------
 export const placeOrder = async (req, res) => {
   try {
-    const {
-      items,
-      total,
-      address,
-      phone,
-      note,
-      paymentMethod,
-      paymentStatus,
-      paidAmount,
-    } = req.body;
+    const { items, total, address, phone, note, paymentMethod, paidAmount } =
+      req.body;
 
-    // VALIDATION
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "Order must contain items" });
     }
+
     if (!address) {
       return res.status(400).json({ message: "Address is required" });
     }
+
     if (!phone) {
       return res.status(400).json({ message: "Phone is required" });
     }
 
-    // bakeryId from first item
     const bakeryId = items[0].bakeryId;
 
-    // CREATE ORDER
     const order = await Order.create({
       customerId: req.user.id,
       bakeryId,
@@ -42,14 +32,14 @@ export const placeOrder = async (req, res) => {
       phone,
       note,
       paymentMethod: paymentMethod || "cod",
-      paymentStatus: paymentStatus || "pending",
-      paidAmount: paidAmount || 0,
+      paymentStatus: paymentMethod === "cod" ? "pending" : "paid",
+      paidAmount: paymentMethod === "cod" ? 0 : paidAmount,
       status: "pending",
     });
 
     return res.status(201).json(order);
   } catch (err) {
-    console.log("Order Error:", err);
+    console.log("Place Order Error:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -70,7 +60,60 @@ export const getMyOrders = async (req, res) => {
 };
 
 // -----------------------------
-// OWNER: VIEW ORDERS
+// GET ORDER BY ID (TRACK ORDER + INVOICE)
+// -----------------------------
+export const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    // -----------------------------
+    // CUSTOMER ACCESS LOGIC
+    // -----------------------------
+    if (role === "customer") {
+      if (order.customerId.toString() !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+    }
+
+    // -----------------------------
+    // OWNER ACCESS LOGIC
+    // -----------------------------
+    if (role === "owner") {
+      const bakery = await Bakery.findOne({ ownerId: userId });
+
+      if (!bakery) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // owner can only view orders belonging to his own bakery
+      if (bakery._id.toString() !== order.bakeryId.toString()) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+    }
+
+    // -----------------------------
+    // ADMIN ACCESS ALWAYS ALLOWED
+    // -----------------------------
+    // no special check needed
+
+    // normalize status
+    order.status = order.status?.toLowerCase();
+
+    return res.json(order);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// -----------------------------
+// OWNER: VIEW ALL ORDERS FOR HIS BAKERY
 // -----------------------------
 export const getOwnerOrders = async (req, res) => {
   try {
@@ -84,10 +127,10 @@ export const getOwnerOrders = async (req, res) => {
       .populate("customerId", "name email")
       .sort({ createdAt: -1 });
 
-    res.json(orders);
+    return res.json(orders);
   } catch (err) {
     console.log("Owner Orders Error:", err);
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -96,17 +139,30 @@ export const getOwnerOrders = async (req, res) => {
 // -----------------------------
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ["pending", "confirmed", "ready", "completed"];
+
+    if (!validStatuses.includes(status.toLowerCase())) {
+      return res.status(400).json({
+        message:
+          "Invalid status. Allowed: pending, confirmed, ready, completed",
+      });
+    }
 
     const updated = await Order.findByIdAndUpdate(
-      id,
-      { status: req.body.status },
+      req.params.id,
+      { status: status.toLowerCase() },
       { new: true }
     );
 
-    res.json(updated);
+    if (!updated) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    return res.json(updated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -115,52 +171,39 @@ export const updateOrderStatus = async (req, res) => {
 // -----------------------------
 export const updatePaymentStatus = async (req, res) => {
   try {
-    const { id } = req.params;
     const { paymentStatus, paidAmount } = req.body;
 
-    // If owner marks COD as PAID, paidAmount should become total.
+    const validStatuses = ["paid", "pending"];
+
+    if (!validStatuses.includes(paymentStatus.toLowerCase())) {
+      return res.status(400).json({
+        message: "Invalid payment status. Allowed: paid, pending",
+      });
+    }
+
     let updateFields = {
-      paymentStatus,
+      paymentStatus: paymentStatus.toLowerCase(),
     };
 
-    if (paymentStatus === "paid") {
-      const order = await Order.findById(id);
+    if (paymentStatus.toLowerCase() === "paid") {
+      const order = await Order.findById(req.params.id);
 
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      // If COD → set paidAmount = full order total
       updateFields.paidAmount = paidAmount || order.total;
     } else {
-      // If switching back to pending
       updateFields.paidAmount = 0;
     }
 
-    const updated = await Order.findByIdAndUpdate(id, updateFields, {
+    const updated = await Order.findByIdAndUpdate(req.params.id, updateFields, {
       new: true,
     });
 
-    res.json(updated);
+    return res.json(updated);
   } catch (err) {
     console.log("Payment Update Error:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// -----------------------------
-// GET ORDER BY ID (Customer Invoice)
-// -----------------------------
-export const getOrderById = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    res.json(order);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
