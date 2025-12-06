@@ -80,3 +80,19 @@ export const rejectBakery = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+export const uploadBakeryImage = async (req, res) => {
+  try {
+    const bakery = await Bakery.findOne({ ownerId: req.user.id });
+    if (!bakery) return res.status(404).json({ error: "Bakery not found" });
+
+    bakery.imageUrl = `/uploads/${req.file.filename}`;
+    await bakery.save();
+
+    res.json({ success: true, imageUrl: bakery.imageUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to upload bakery image" });
+  }
+};

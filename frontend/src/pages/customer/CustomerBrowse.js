@@ -286,14 +286,18 @@ export default function CustomerBrowse() {
             >
               {/* IMAGE */}
               <div className="h-48 bg-gray-100 overflow-hidden relative">
-                <img
-                  src={
-                    b.imageUrl ||
-                    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe"
-                  }
-                  alt={b.name}
-                  className="w-full h-full object-cover transition duration-500 hover:scale-110"
-                />
+               <img
+  src={
+    b.imageUrl
+      ? b.imageUrl.startsWith("http")
+        ? b.imageUrl
+        : `http://localhost:5000${b.imageUrl}`
+      : "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe"
+  }
+  alt={b.name}
+  className="w-full h-full object-cover transition duration-500 hover:scale-110"
+/>
+
 
                 {/* CITY BADGE */}
                 {b.city && (

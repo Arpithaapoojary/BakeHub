@@ -9,7 +9,25 @@ import {
   getApprovedBakeries,   // ✅ ADD THIS
 } from "../controllers/bakery.controller.js";
 
+import { uploadBakeryImage } from "../controllers/bakery.controller.js";
+import { upload } from "../middleware/upload.js";
+
+
+
+
 const router = express.Router();
+
+
+
+
+router.put(
+  "/upload-image",
+  requireAuth,
+  allowRoles("owner"),
+  upload.single("image"),
+  uploadBakeryImage
+);
+
 
 // ⭐ PUBLIC: Get only approved bakeries (CUSTOMER)
 router.get("/public", getApprovedBakeries);   // ✅ ADD THIS

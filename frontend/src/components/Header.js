@@ -111,10 +111,7 @@ export default function Header() {
 
         {/* ADMIN NAVIGATION */}
         {token && role === "admin" && (
-          <Link
-            to="/admin/dashboard"
-            className="hover:text-pink-200 transition"
-          >
+          <Link to="/admin" className="hover:text-pink-200 transition">
             Admin Panel
           </Link>
         )}

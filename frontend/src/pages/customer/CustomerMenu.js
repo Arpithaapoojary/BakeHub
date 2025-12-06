@@ -111,7 +111,6 @@ export default function CustomerMenu() {
               : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000"
           }
           className="w-full h-full object-cover"
-          alt={bakery?.name}
         />
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60" />
@@ -171,17 +170,29 @@ export default function CustomerMenu() {
             key={item._id}
             className="bg-white rounded-2xl shadow-lg border border-pink-100 p-0"
           >
-            <img
-              src={
-                item.imageUrl
-                  ? item.imageUrl.startsWith("http")
-                    ? item.imageUrl
-                    : `http://localhost:5000${item.imageUrl}`
-                  : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000"
-              }
-              className="w-full h-48 object-cover rounded-t-2xl"
-              alt={item.name}
-            />
+            {/* IMAGE WITH SOLD OUT OVERLAY */}
+            <div className="relative">
+              <img
+                src={
+                  item.imageUrl
+                    ? item.imageUrl.startsWith("http")
+                      ? item.imageUrl
+                      : `http://localhost:5000${item.imageUrl}`
+                    : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000"
+                }
+                className="w-full h-48 object-cover rounded-t-2xl"
+                alt={item.name}
+              />
+
+              {/* SOLD OUT BADGE */}
+              {item.isSoldOut && (
+                <div className="absolute inset-0 bg-black/50 flex justify-center items-center rounded-t-2xl">
+                  <span className="bg-red-600 text-white px-4 py-1 rounded-full text-lg font-bold shadow">
+                    SOLD OUT
+                  </span>
+                </div>
+              )}
+            </div>
 
             <div className="p-4">
               <h3 className="text-lg font-semibold text-gray-800">
@@ -199,12 +210,22 @@ export default function CustomerMenu() {
                   ₹{item.price}
                 </span>
 
-                <button
-                  onClick={() => addToCart(item)}
-                  className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-full"
-                >
-                  <ShoppingBag size={18} /> Add
-                </button>
+                {/* SOLD OUT → DISABLE ADD BUTTON */}
+                {item.isSoldOut ? (
+                  <button
+                    disabled
+                    className="px-4 py-2 bg-gray-400 text-white rounded-full cursor-not-allowed"
+                  >
+                    Sold Out
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => addToCart(item)}
+                    className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-full"
+                  >
+                    <ShoppingBag size={18} /> Add
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -318,16 +318,15 @@ export default function AdminDashboard() {
           </button>
 
           <button
-  onClick={() => setSection("messages")}
-  className={`flex items-center gap-3 p-2 rounded-lg ${
-    section === "messages"
-      ? "bg-pink-50 text-pink-600"
-      : "hover:bg-slate-100"
-  }`}
->
-  <User size={18} /> Messages
-</button>
-
+            onClick={() => setSection("messages")}
+            className={`flex items-center gap-3 p-2 rounded-lg ${
+              section === "messages"
+                ? "bg-pink-50 text-pink-600"
+                : "hover:bg-slate-100"
+            }`}
+          >
+            <User size={18} /> Messages
+          </button>
 
           <button
             onClick={() => {
@@ -609,8 +608,11 @@ export default function AdminDashboard() {
                   <div className="h-40 bg-slate-100 overflow-hidden">
                     <img
                       src={
-                        b.imageUrl ||
-                        "https://images.unsplash.com/photo-1542831371-d531d36971e6"
+                        b.imageUrl
+                          ? b.imageUrl.startsWith("http")
+                            ? b.imageUrl
+                            : `http://localhost:5000${b.imageUrl}`
+                          : "https://images.unsplash.com/photo-1542831371-d531d36971e6"
                       }
                       alt={b.name}
                       className="w-full h-full object-cover"
@@ -715,8 +717,7 @@ export default function AdminDashboard() {
           </>
         )}
 
-         {section === "messages" && <Messages />}
-
+        {section === "messages" && <Messages />}
 
         {/* ANALYTICS view */}
         {section === "analytics" && (
@@ -819,195 +820,192 @@ export default function AdminDashboard() {
             </div>
           </>
         )}
-
-
-       
       </main>
     </div>
   );
 
-function Messages() {
-  const [messages, setMessages] = useState([]);
-  const [replyText, setReplyText] = useState("");
-  const [activeMsg, setActiveMsg] = useState(null);
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  function Messages() {
+    const [messages, setMessages] = useState([]);
+    const [replyText, setReplyText] = useState("");
+    const [activeMsg, setActiveMsg] = useState(null);
+    const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  const CATEGORY_COLORS = {
-    Support: "bg-blue-100 text-blue-700",
-    Help: "bg-indigo-100 text-indigo-700",
-    Complaint: "bg-red-100 text-red-700",
-    Feedback: "bg-green-100 text-green-700",
-    "Technical Issue": "bg-orange-100 text-orange-700",
-  };
+    const CATEGORY_COLORS = {
+      Support: "bg-blue-100 text-blue-700",
+      Help: "bg-indigo-100 text-indigo-700",
+      Complaint: "bg-red-100 text-red-700",
+      Feedback: "bg-green-100 text-green-700",
+      "Technical Issue": "bg-orange-100 text-orange-700",
+    };
 
-  useEffect(() => {
-    loadMessages();
-  }, []);
+    useEffect(() => {
+      loadMessages();
+    }, []);
 
-  const loadMessages = async () => {
-    const res = await axios.get("http://localhost:5000/api/messages", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setMessages(res.data);
-  };
+    const loadMessages = async () => {
+      const res = await axios.get("http://localhost:5000/api/messages", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMessages(res.data);
+    };
 
-  const openMessage = async (msg) => {
-    setActiveMsg(msg);
+    const openMessage = async (msg) => {
+      setActiveMsg(msg);
 
-    if (msg.status === "unread") {
+      if (msg.status === "unread") {
+        await axios.put(
+          `http://localhost:5000/api/messages/${msg._id}/read`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        loadMessages();
+      }
+    };
+
+    const sendReply = async () => {
+      if (!replyText.trim()) return alert("Reply cannot be empty");
+
       await axios.put(
-        `http://localhost:5000/api/messages/${msg._id}/read`,
+        `http://localhost:5000/api/messages/${activeMsg._id}/reply`,
+        { replyText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("Reply sent successfully!");
+      setReplyText("");
+      setActiveMsg(null);
+      loadMessages();
+    };
+
+    const markResolved = async (id) => {
+      await axios.put(
+        `http://localhost:5000/api/messages/${id}/resolve`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
       loadMessages();
-    }
-  };
+    };
 
-  const sendReply = async () => {
-    if (!replyText.trim()) return alert("Reply cannot be empty");
+    // Filter messages by category
+    const filteredMessages =
+      categoryFilter === "all"
+        ? messages
+        : messages.filter((m) => m.category === categoryFilter);
 
-    await axios.put(
-      `http://localhost:5000/api/messages/${activeMsg._id}/reply`,
-      { replyText },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    return (
+      <div>
+        <h2 className="text-3xl font-bold mb-6">User Messages</h2>
 
-    alert("Reply sent successfully!");
-    setReplyText("");
-    setActiveMsg(null);
-    loadMessages();
-  };
+        {/* FILTER BAR */}
+        <div className="mb-6 flex items-center gap-4">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-2 border rounded-xl shadow-sm"
+          >
+            <option value="all">All Categories</option>
+            <option value="Support">Support</option>
+            <option value="Help">Help</option>
+            <option value="Complaint">Complaint</option>
+            <option value="Feedback">Feedback</option>
+            <option value="Technical Issue">Technical Issue</option>
+          </select>
+        </div>
 
-  const markResolved = async (id) => {
-    await axios.put(
-      `http://localhost:5000/api/messages/${id}/resolve`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    loadMessages();
-  };
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* MESSAGE LIST */}
+          <div className="space-y-4">
+            {filteredMessages.map((m) => (
+              <div
+                key={m._id}
+                onClick={() => openMessage(m)}
+                className={`p-5 rounded-xl shadow cursor-pointer border transition 
+                ${
+                  m.status === "unread"
+                    ? "bg-pink-50 border-pink-300"
+                    : "bg-white"
+                }`}
+              >
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold">{m.name}</h3>
 
-  // Filter messages by category
-  const filteredMessages =
-    categoryFilter === "all"
-      ? messages
-      : messages.filter((m) => m.category === categoryFilter);
+                  {/* STATUS */}
+                  <span
+                    className={`text-xs px-3 py-1 rounded-full ${
+                      m.status === "unread"
+                        ? "bg-red-100 text-red-700"
+                        : m.status === "resolved"
+                        ? "bg-gray-200"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {m.status}
+                  </span>
+                </div>
 
-  return (
-    <div>
-      <h2 className="text-3xl font-bold mb-6">User Messages</h2>
+                <p className="text-sm text-gray-600">{m.email}</p>
 
-      {/* FILTER BAR */}
-      <div className="mb-6 flex items-center gap-4">
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2 border rounded-xl shadow-sm"
-        >
-          <option value="all">All Categories</option>
-          <option value="Support">Support</option>
-          <option value="Help">Help</option>
-          <option value="Complaint">Complaint</option>
-          <option value="Feedback">Feedback</option>
-          <option value="Technical Issue">Technical Issue</option>
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        {/* MESSAGE LIST */}
-        <div className="space-y-4">
-          {filteredMessages.map((m) => (
-            <div
-              key={m._id}
-              onClick={() => openMessage(m)}
-              className={`p-5 rounded-xl shadow cursor-pointer border transition 
-                ${m.status === "unread" ? "bg-pink-50 border-pink-300" : "bg-white"}`}
-            >
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold">{m.name}</h3>
-
-                {/* STATUS */}
+                {/* CATEGORY BADGE */}
                 <span
-                  className={`text-xs px-3 py-1 rounded-full ${
-                    m.status === "unread"
-                      ? "bg-red-100 text-red-700"
-                      : m.status === "resolved"
-                      ? "bg-gray-200"
-                      : "bg-green-100 text-green-700"
-                  }`}
+                  className={`inline-block mt-2 px-3 py-1 text-xs rounded-full 
+                ${CATEGORY_COLORS[m.category]}`}
                 >
-                  {m.status}
+                  {m.category}
                 </span>
-              </div>
 
-              <p className="text-sm text-gray-600">{m.email}</p>
+                <p className="text-sm text-gray-700 mt-3 line-clamp-2">
+                  {m.message}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* RIGHT SIDE: MESSAGE DETAILS */}
+          {activeMsg && (
+            <div className="bg-white p-6 rounded-xl border shadow">
+              <h3 className="text-xl font-semibold">{activeMsg.name}</h3>
+              <p className="text-gray-500">{activeMsg.email}</p>
 
               {/* CATEGORY BADGE */}
               <span
-                className={`inline-block mt-2 px-3 py-1 text-xs rounded-full 
-                ${CATEGORY_COLORS[m.category]}`}
+                className={`inline-block mt-3 px-3 py-1 text-xs rounded-full 
+              ${CATEGORY_COLORS[activeMsg.category]}`}
               >
-                {m.category}
+                {activeMsg.category}
               </span>
 
-              <p className="text-sm text-gray-700 mt-3 line-clamp-2">
-                {m.message}
-              </p>
+              <p className="mt-4 text-gray-800">{activeMsg.message}</p>
+
+              {/* ADMIN REPLY BOX */}
+              <textarea
+                className="w-full border rounded-xl p-3 mt-4"
+                rows="4"
+                placeholder="Write your reply..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+              />
+
+              <div className="flex gap-4 mt-4">
+                <button
+                  onClick={sendReply}
+                  className="px-4 py-2 bg-pink-600 text-white rounded-xl"
+                >
+                  Send Reply
+                </button>
+
+                <button
+                  onClick={() => markResolved(activeMsg._id)}
+                  className="px-4 py-2 bg-gray-300 rounded-xl"
+                >
+                  Mark Resolved
+                </button>
+              </div>
             </div>
-          ))}
+          )}
         </div>
-
-        {/* RIGHT SIDE: MESSAGE DETAILS */}
-        {activeMsg && (
-          <div className="bg-white p-6 rounded-xl border shadow">
-            <h3 className="text-xl font-semibold">{activeMsg.name}</h3>
-            <p className="text-gray-500">{activeMsg.email}</p>
-
-            {/* CATEGORY BADGE */}
-            <span
-              className={`inline-block mt-3 px-3 py-1 text-xs rounded-full 
-              ${CATEGORY_COLORS[activeMsg.category]}`}
-            >
-              {activeMsg.category}
-            </span>
-
-            <p className="mt-4 text-gray-800">{activeMsg.message}</p>
-
-            {/* ADMIN REPLY BOX */}
-            <textarea
-              className="w-full border rounded-xl p-3 mt-4"
-              rows="4"
-              placeholder="Write your reply..."
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-            />
-
-            <div className="flex gap-4 mt-4">
-              <button
-                onClick={sendReply}
-                className="px-4 py-2 bg-pink-600 text-white rounded-xl"
-              >
-                Send Reply
-              </button>
-
-              <button
-                onClick={() => markResolved(activeMsg._id)}
-                className="px-4 py-2 bg-gray-300 rounded-xl"
-              >
-                Mark Resolved
-              </button>
-            </div>
-          </div>
-        )}
       </div>
-    </div>
-  );
-}
-
-
-
+    );
+  }
 }

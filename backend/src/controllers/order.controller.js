@@ -4,6 +4,11 @@ import Bakery from "../models/bakery.model.js";
 // -----------------------------
 // CUSTOMER: PLACE ORDER
 // -----------------------------
+// CUSTOMER: PLACE ORDER + SEND EMAIL NOTIFICATION
+// -----------------------------
+import { sendMail } from "../utils/mailer.js";
+import User from "../models/user.model.js";
+
 export const placeOrder = async (req, res) => {
   try {
     const { items, total, address, phone, note, paymentMethod, paidAmount } =
@@ -23,6 +28,7 @@ export const placeOrder = async (req, res) => {
 
     const bakeryId = items[0].bakeryId;
 
+    // Create Order FIRST (so order never fails)
     const order = await Order.create({
       customerId: req.user.id,
       bakeryId,
@@ -37,12 +43,73 @@ export const placeOrder = async (req, res) => {
       status: "pending",
     });
 
+    // Fetch customer & bakery
+    const customer = await User.findById(req.user.id);
+    const bakery = await Bakery.findById(bakeryId).populate("ownerId");
+
+    // Format items
+    const itemsHTML = items
+      .map(
+        (i) =>
+          `<li>${i.name} — Qty: ${i.qty} — ₹${i.price * i.qty}</li>`
+      )
+      .join("");
+
+    // ---------------------------
+    // SEND CUSTOMER EMAIL (OPTIONAL)
+    // ---------------------------
+    try {
+      if (customer?.email) {
+        await sendMail(
+          customer.email,
+          "BakeHub – Your Order is Confirmed! 🎉",
+          `
+          <h2>Hello ${customer.name},</h2>
+          <p>Your order has been successfully placed!</p>
+          <h3>Order Summary:</h3>
+          <ul>${itemsHTML}</ul>
+          <p><strong>Total:</strong> ₹${total}</p>
+          <p><strong>Delivery Address:</strong> ${address}</p>
+          <p>Thank you for ordering from <strong>${bakery.name}</strong> ❤️</p>
+        `
+        );
+      }
+    } catch (emailErr) {
+      console.log("Customer email failed:", emailErr.message);
+    }
+
+    // ---------------------------
+    // SEND OWNER EMAIL (OPTIONAL)
+    // ---------------------------
+    try {
+      if (bakery?.ownerId?.email) {
+        await sendMail(
+          bakery.ownerId.email,
+          "BakeHub – New Order Received! 🛒",
+          `
+          <h2>New Order from ${customer.name}</h2>
+          <h3>Items:</h3>
+          <ul>${itemsHTML}</ul>
+          <p><strong>Total:</strong> ₹${total}</p>
+          <p><strong>Delivery Address:</strong> ${address}</p>
+          <p>Please update the order status in Owner Dashboard.</p>
+        `
+        );
+      }
+    } catch (emailErr) {
+      console.log("Owner email failed:", emailErr.message);
+    }
+
+    // ALWAYS SUCCESS
     return res.status(201).json(order);
+
   } catch (err) {
-    console.log("Place Order Error:", err);
-    res.status(500).json({ message: err.message });
+    console.log("Place Order Fatal Error:", err.message);
+    res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+
 
 // -----------------------------
 // CUSTOMER: VIEW MY ORDERS

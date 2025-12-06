@@ -150,17 +150,6 @@ export default function MyOrders() {
                         className="flex justify-between items-center border-b border-pink-100 pb-3"
                       >
                         <div className="flex items-center gap-3">
-                          <img
-                            src={
-                              item.imageUrl
-                                ? item.imageUrl.startsWith("http")
-                                  ? item.imageUrl
-                                  : `http://localhost:5000${item.imageUrl}`
-                                : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800"
-                            }
-                            alt={item.name}
-                            className="w-14 h-14 rounded-xl object-cover border"
-                          />
                           <div>
                             <p className="font-medium text-gray-800">
                               {item.name}
@@ -200,14 +189,6 @@ export default function MyOrders() {
                       className="flex items-center gap-2 bg-white border border-pink-400 px-5 py-2 rounded-xl hover:bg-pink-50 transition"
                     >
                       View Invoice
-                    </button>
-
-                    <button
-                      onClick={() => alert("Reorder feature coming soon")}
-                      className="flex items-center gap-2 bg-white border border-gray-300 px-5 py-2.5 text-sm md:text-base rounded-xl shadow hover:bg-gray-100 transition active:scale-95"
-                    >
-                      <RefreshCcw size={16} />
-                      Reorder
                     </button>
                   </div>
                 </div>

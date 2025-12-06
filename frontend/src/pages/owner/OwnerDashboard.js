@@ -216,6 +216,35 @@ export default function OwnerDashboard() {
     }
   };
 
+  // ------------------ UPLOAD BAKERY IMAGE ------------------
+  const uploadBakeryImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      await axios.put(
+        "http://localhost:5000/api/bakeries/upload-image",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // Refresh bakery details
+      loadBakery();
+      alert("Bakery image updated successfully!");
+    } catch (err) {
+      console.error("Bakery image upload error:", err);
+      alert("Failed to upload bakery image.");
+    }
+  };
+
   // -------------------------------------------------------------------
   // ANALYTICS FROM ORDERS (NO EXTRA BACKEND NEEDED)
   // -------------------------------------------------------------------
@@ -893,10 +922,34 @@ export default function OwnerDashboard() {
             </p>
 
             <div className="bg-white p-6 rounded-2xl border shadow-sm text-sm text-gray-600">
-              <p>
-                You can extend this section later with options like updating
-                bakery details, changing password, notification preferences,
-                etc.
+              <h3 className="text-lg font-semibold mb-3">Bakery Image</h3>
+
+              {/* Show Current Bakery Image */}
+              {bakery?.imageUrl && (
+                <img
+                  src={
+                    bakery.imageUrl.startsWith("http")
+                      ? bakery.imageUrl
+                      : `http://localhost:5000${bakery.imageUrl}`
+                  }
+                  alt="Bakery"
+                  className="w-full h-48 object-cover rounded-xl border mb-4"
+                />
+              )}
+
+              {/* Upload Input */}
+              <label className="block mb-1 font-medium text-gray-700">
+                Upload New Bakery Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={uploadBakeryImage}
+                className="w-full border rounded-lg p-2 mb-4"
+              />
+
+              <p className="text-xs text-gray-500">
+                This image will appear on Customer Browse and Menu pages.
               </p>
             </div>
           </div>
