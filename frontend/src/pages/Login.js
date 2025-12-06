@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function Login() {
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // Remember Me
+  const [remember, setRemember] = useState(false);
 
   // Validation States
   const [emailError, setEmailError] = useState("");
@@ -19,7 +22,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Detect role from URL (customer / owner / admin)
+  // Detect role from URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const r = params.get("role");
@@ -29,9 +32,16 @@ export default function Login() {
     } else {
       setRole("customer");
     }
+
+    // Auto-fill if Remember Me was used
+    const savedEmail = localStorage.getItem("remember_email");
+    const savedRole = localStorage.getItem("remember_role");
+
+    if (savedEmail) setEmail(savedEmail);
+    if (savedRole) setRole(savedRole);
   }, [location]);
 
-  // Validate Email Format
+  // Email Validation
   const handleEmail = (value) => {
     setEmail(value);
 
@@ -43,7 +53,7 @@ export default function Login() {
     }
   };
 
-  // Validate Password (Min 6 chars)
+  // Password Validation
   const handlePassword = (value) => {
     setPassword(value);
 
@@ -58,13 +68,13 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    if (emailError || passwordError) {
-      setError("Fix all errors before submitting");
+    if (!email || !password) {
+      setError("All fields are required");
       return;
     }
 
-    if (!email || !password) {
-      setError("All fields are required");
+    if (emailError || passwordError) {
+      setError("Fix all errors before submitting");
       return;
     }
 
@@ -77,22 +87,28 @@ export default function Login() {
         role,
       });
 
-      // Save login info
+      // Clear storage & save new data
       localStorage.clear();
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("name", res.data.name);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      // Redirects
+      // Save Remember Me
+      if (remember) {
+        localStorage.setItem("remember_email", email);
+        localStorage.setItem("remember_role", role);
+      } else {
+        localStorage.removeItem("remember_email");
+        localStorage.removeItem("remember_role");
+      }
+
+      // Redirection Logic
       if (role === "admin") {
         navigate("/admin");
       } else if (role === "owner") {
-        if (res.data.bakeryStatus === "approved") {
-          navigate("/owner");
-        } else {
-          navigate("/owner/pending");
-        }
+        if (res.data.bakeryStatus === "approved") navigate("/owner");
+        else navigate("/owner/pending");
       } else {
         navigate("/customer");
       }
@@ -105,35 +121,35 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-pink-50 to-slate-100">
-      <div className="w-full max-w-md bg-white/90 backdrop-blur-sm border rounded-2xl shadow-lg px-8 py-10">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-sm border rounded-2xl shadow-md px-8 py-10">
         {/* TITLE */}
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
             Login as {role.toUpperCase()}
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 mt-1">
             Welcome back! Please enter your credentials.
           </p>
         </div>
 
         {/* ERROR BOX */}
         {error && (
-          <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 animate-fadeIn">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        {/* LOGIN FORM */}
+        <form onSubmit={handleLogin} className="space-y-5">
           {/* EMAIL */}
-          <div>
+          <div className="transition-all duration-300">
             <label className="text-sm font-medium text-slate-700">Email</label>
             <input
               type="email"
               placeholder="you@example.com"
-              className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-400 text-sm"
+              className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-400 text-sm transition-all"
               value={email}
               onChange={(e) => handleEmail(e.target.value)}
-              required
             />
             {emailError && (
               <p className="text-xs text-red-600 mt-1">{emailError}</p>
@@ -141,38 +157,76 @@ export default function Login() {
           </div>
 
           {/* PASSWORD */}
-          <div>
+          <div className="transition-all duration-300">
             <label className="text-sm font-medium text-slate-700">
               Password
             </label>
+
             <div className="relative mt-1">
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter password"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-400 text-sm"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-400 text-sm transition-all"
                 value={password}
                 onChange={(e) => handlePassword(e.target.value)}
-                required
               />
               <span
+                className="absolute right-3 top-2.5 cursor-pointer text-slate-500 hover:text-pink-600 transition"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 cursor-pointer text-slate-500"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {/* Password Animation */}
+                {showPassword ? (
+                  <EyeOff size={18} className="animate-fadeIn" />
+                ) : (
+                  <Eye size={18} className="animate-fadeIn" />
+                )}
               </span>
             </div>
+
             {passwordError && (
               <p className="text-xs text-red-600 mt-1">{passwordError}</p>
             )}
+
+            {/* FORGOT PASSWORD */}
+            {role !== "admin" && (
+              <p className="text-xs text-right mt-1">
+                <span
+                  className="text-pink-600 cursor-pointer hover:underline"
+                  onClick={() => navigate("/forgot-password")}
+                >
+                  Forgot Password?
+                </span>
+              </p>
+            )}
           </div>
 
-          {/* SUBMIT BUTTON */}
+          {/* REMEMBER ME */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={() => setRemember(!remember)}
+              className="w-4 h-4 accent-pink-600 cursor-pointer"
+            />
+            <label className="text-sm text-slate-700 cursor-pointer">
+              Remember me
+            </label>
+          </div>
+
+          {/* LOGIN BUTTON */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-pink-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-pink-700 transition shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-pink-600 text-white py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-pink-700 transition shadow disabled:opacity-50"
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
 

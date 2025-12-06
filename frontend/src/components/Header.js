@@ -104,10 +104,7 @@ export default function Header() {
 
         {/* OWNER NAVIGATION */}
         {token && role === "owner" && (
-          <Link
-            to="/owner/dashboard"
-            className="hover:text-pink-200 transition"
-          >
+          <Link to="/owner" className="hover:text-pink-200 transition">
             Dashboard
           </Link>
         )}

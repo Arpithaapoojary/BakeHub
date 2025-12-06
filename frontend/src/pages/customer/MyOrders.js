@@ -152,8 +152,11 @@ export default function MyOrders() {
                         <div className="flex items-center gap-3">
                           <img
                             src={
-                              item.imageUrl ||
-                              "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600"
+                              item.imageUrl
+                                ? item.imageUrl.startsWith("http")
+                                  ? item.imageUrl
+                                  : `http://localhost:5000${item.imageUrl}`
+                                : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800"
                             }
                             alt={item.name}
                             className="w-14 h-14 rounded-xl object-cover border"

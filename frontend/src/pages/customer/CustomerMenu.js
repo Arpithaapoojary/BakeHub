@@ -104,10 +104,14 @@ export default function CustomerMenu() {
       <div className="relative w-full h-64 md:h-72 lg:h-80 rounded-b-[40px] overflow-hidden shadow-lg">
         <img
           src={
-            bakery?.imageUrl ||
-            "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=1200"
+            bakery?.imageUrl
+              ? bakery.imageUrl.startsWith("http")
+                ? bakery.imageUrl
+                : `http://localhost:5000${bakery.imageUrl}`
+              : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000"
           }
           className="w-full h-full object-cover"
+          alt={bakery?.name}
         />
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60" />
@@ -169,10 +173,14 @@ export default function CustomerMenu() {
           >
             <img
               src={
-                item.imageUrl ||
-                "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000"
+                item.imageUrl
+                  ? item.imageUrl.startsWith("http")
+                    ? item.imageUrl
+                    : `http://localhost:5000${item.imageUrl}`
+                  : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000"
               }
               className="w-full h-48 object-cover rounded-t-2xl"
+              alt={item.name}
             />
 
             <div className="p-4">

@@ -15,64 +15,168 @@ export default function Register() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  // Owner-Only Fields
+  // Owner Fields
   const [bakeryName, setBakeryName] = useState("");
   const [address, setAddress] = useState("");
 
-  // Validation Errors
+  // Validation
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState("");
 
+  // Loading states
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Detect role from URL
+  // OTP States
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpMessage, setOtpMessage] = useState("");
+  const [otpError, setOtpError] = useState("");
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const r = params.get("role");
-    if (r === "customer" || r === "owner") {
-      setRole(r);
-    }
+    if (r === "customer" || r === "owner") setRole(r);
   }, [location]);
 
-  // ==================== VALIDATION ====================
-  const validateFields = () => {
+  // Backend duplicate checks
+  const checkExistingEmail = async (email) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/check-email",
+        { email }
+      );
+      return res.data.exists;
+    } catch {
+      return false;
+    }
+  };
+
+  const checkExistingPhone = async (phone) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/check-phone",
+        { phone }
+      );
+      return res.data.exists;
+    } catch {
+      return false;
+    }
+  };
+
+  // ================= SEND OTP =================
+  const handleSendOtp = async () => {
+    setOtpError("");
+    setOtpMessage("");
+    setOtp("");
+    setOtpVerified(false);
+
+    if (!email.trim()) {
+      setErrors((prev) => ({ ...prev, email: "Email is required" }));
+      return;
+    }
+
+    try {
+      setOtpSending(true);
+
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/send-register-otp",
+        { email }
+      );
+
+      setOtpSent(true);
+      setOtpMessage(res.data.message);
+    } catch (err) {
+      const msg = err.response?.data?.error || "Failed to send OTP";
+      setOtpError(msg);
+      setOtpSent(false); // ensure OTP section stays hidden
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
+  // ================= VERIFY OTP =================
+  const handleVerifyOtp = async () => {
+    setOtpError("");
+    setOtpMessage("");
+
+    if (!otp.trim()) {
+      setOtpError("Please enter OTP");
+      return;
+    }
+
+    try {
+      setOtpVerifying(true);
+
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/verify-register-otp",
+        { email, otp }
+      );
+
+      if (res.data.verified) {
+        setOtpVerified(true);
+        setOtpMessage("Email verified successfully!");
+      }
+    } catch (err) {
+      const msg = err.response?.data?.error || "Invalid OTP";
+      setOtpError(msg);
+    } finally {
+      setOtpVerifying(false);
+    }
+  };
+
+  // ================= VALIDATION =================
+  const validateFields = async () => {
     let temp = {};
 
     // Name
     if (!name.trim()) temp.name = "Full name is required";
 
-    // Email
+    // Email format
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim()) temp.email = "Email is required";
     else if (!emailPattern.test(email)) temp.email = "Enter a valid email";
+    else if (await checkExistingEmail(email))
+      temp.email = "Email is already registered";
 
     // Phone
+    const phonePattern = /^[6-9]\d{9}$/;
     if (!phone.trim()) temp.phone = "Phone number is required";
-    else if (!/^\d{10}$/.test(phone))
+    else if (!phonePattern.test(phone))
       temp.phone = "Enter a valid 10-digit phone number";
+    else if (await checkExistingPhone(phone))
+      temp.phone = "Phone already registered";
 
-    // Password
+    // Strong password
+    const strongPass = /^(?=.*[0-9])(?=.*[!@#$%^&*]).{6,}$/;
     if (!password.trim()) temp.password = "Password is required";
-    else if (password.length < 6)
-      temp.password = "Password must be at least 6 characters";
+    else if (!strongPass.test(password))
+      temp.password = "Password must include a number and special character";
 
-    // Owner-specific
     if (role === "owner") {
-      if (!bakeryName.trim()) temp.bakeryName = "Bakery name is required";
-      if (!address.trim()) temp.address = "Address is required";
+      if (!bakeryName.trim()) temp.bakeryName = "Bakery name required";
+      if (!address.trim()) temp.address = "Address required";
     }
 
     setErrors(temp);
     return Object.keys(temp).length === 0;
   };
 
-  // ==================== SUBMIT HANDLER ====================
+  // ================= REGISTER =================
   const handleRegister = async (e) => {
     e.preventDefault();
     setGeneralError("");
 
-    if (!validateFields()) return;
+    if (!otpVerified) {
+      setGeneralError("Please verify your email with OTP before registering.");
+      return;
+    }
+
+    const isValid = await validateFields();
+    if (!isValid) return;
 
     try {
       setLoading(true);
@@ -89,7 +193,6 @@ export default function Register() {
 
       await axios.post(endpoint, payload);
 
-      // Redirect after success
       navigate(`/login?role=${role}`);
     } catch (err) {
       setGeneralError(err.response?.data?.error || "Registration failed");
@@ -100,68 +203,109 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-pink-50 to-slate-100">
-      <div className="w-full max-w-lg bg-white/90 backdrop-blur-sm border rounded-2xl shadow-lg px-8 py-10">
-        {/* TITLE */}
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">
-            Register as {role === "customer" ? "Customer" : "Bakery Owner"}
-          </h1>
-          <p className="text-sm text-slate-500">
-            Please fill in your details below.
-          </p>
-        </div>
+      <div className="w-full max-w-lg bg-white border rounded-2xl shadow-lg px-8 py-10">
+        <h1 className="text-2xl font-bold text-center mb-6">
+          Register as {role === "customer" ? "Customer" : "Bakery Owner"}
+        </h1>
 
-        {/* GENERAL ERROR */}
         {generalError && (
-          <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            {generalError}
-          </div>
+          <p className="text-red-600 text-center mb-4">{generalError}</p>
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
-          {/* NAME */}
+          {/* FULL NAME */}
           <div>
-            <label className="text-sm font-medium text-slate-700">
-              Full Name
-            </label>
+            <label className="text-sm font-medium">Full Name</label>
             <input
               type="text"
-              placeholder="John Doe"
+              className="w-full mt-1 px-3 py-2 border rounded-lg"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-400"
+              placeholder="John Doe"
             />
             {errors.name && (
-              <p className="text-xs text-red-600">{errors.name}</p>
+              <p className="text-red-600 text-xs">{errors.name}</p>
             )}
           </div>
 
-          {/* EMAIL */}
+          {/* EMAIL + SEND OTP */}
           <div>
-            <label className="text-sm font-medium text-slate-700">Email</label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-400"
-            />
+            <label className="text-sm font-medium">Email</label>
+            <div className="flex gap-2 mt-1">
+              <input
+                type="email"
+                className="w-full px-3 py-2 border rounded-lg"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setOtpSent(false);
+                  setOtpVerified(false);
+                  setOtp("");
+                  setOtpError("");
+                }}
+                placeholder="you@example.com"
+              />
+
+              <button
+                type="button"
+                onClick={handleSendOtp}
+                disabled={otpSending}
+                className="px-3 py-2 bg-pink-600 text-white rounded-lg text-sm"
+              >
+                {otpSending ? "Sending..." : "Send OTP"}
+              </button>
+            </div>
+
+            {/* EMAIL ERRORS */}
             {errors.email && (
               <p className="text-xs text-red-600">{errors.email}</p>
+            )}
+
+            {/* NEW: SHOW OTP ERRORS HERE OUTSIDE OTP BOX */}
+            {otpError && (
+              <p className="text-xs text-red-600 mt-1">{otpError}</p>
+            )}
+
+            {/* OTP INPUT */}
+            {otpSent && (
+              <div className="mt-3">
+                <label className="text-xs font-medium">Enter OTP</label>
+                <div className="flex gap-2 mt-1">
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border rounded-lg"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="6-digit OTP"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    disabled={otpVerifying}
+                    className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm"
+                  >
+                    {otpVerifying ? "Verifying..." : "Verify"}
+                  </button>
+                </div>
+
+                {otpMessage && (
+                  <p className="text-green-600 text-xs">{otpMessage}</p>
+                )}
+                {otpError && <p className="text-red-600 text-xs">{otpError}</p>}
+              </div>
             )}
           </div>
 
           {/* PHONE */}
           <div>
-            <label className="text-sm font-medium text-slate-700">
-              Phone Number
-            </label>
+            <label className="text-sm font-medium">Phone Number</label>
             <input
-              type="tel"
-              placeholder="9876543210"
+              type="text"
+              className="w-full mt-1 px-3 py-2 border rounded-lg"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-400"
+              placeholder="9876543210"
             />
             {errors.phone && (
               <p className="text-xs text-red-600">{errors.phone}</p>
@@ -170,20 +314,19 @@ export default function Register() {
 
           {/* PASSWORD */}
           <div>
-            <label className="text-sm font-medium text-slate-700">
-              Password
-            </label>
+            <label className="text-sm font-medium">Password</label>
             <div className="relative mt-1">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Minimum 6 characters"
+                className="w-full px-3 py-2 border rounded-lg"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-400"
+                placeholder="Minimum 6 characters"
               />
+
               <span
+                className="absolute right-3 top-3 cursor-pointer"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 cursor-pointer text-slate-500"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </span>
@@ -193,37 +336,31 @@ export default function Register() {
             )}
           </div>
 
-          {/* OWNER-ONLY FIELDS */}
+          {/* OWNER FIELDS */}
           {role === "owner" && (
             <>
-              {/* Bakery Name */}
               <div>
-                <label className="text-sm font-medium text-slate-700">
-                  Bakery Name
-                </label>
+                <label className="text-sm font-medium">Bakery Name</label>
                 <input
                   type="text"
-                  placeholder="Sweet Treats Bakery"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg"
                   value={bakeryName}
                   onChange={(e) => setBakeryName(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-400"
+                  placeholder="Sweet Treats Bakery"
                 />
                 {errors.bakeryName && (
                   <p className="text-xs text-red-600">{errors.bakeryName}</p>
                 )}
               </div>
 
-              {/* Address */}
               <div>
-                <label className="text-sm font-medium text-slate-700">
-                  Bakery Address
-                </label>
+                <label className="text-sm font-medium">Bakery Address</label>
                 <textarea
-                  placeholder="Full bakery address"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-400"
                   rows={3}
+                  placeholder="Full bakery address"
                 />
                 {errors.address && (
                   <p className="text-xs text-red-600">{errors.address}</p>
@@ -232,21 +369,20 @@ export default function Register() {
             </>
           )}
 
-          {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-pink-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-pink-700 transition shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-pink-600 text-white py-2.5 rounded-lg text-sm font-semibold"
           >
             {loading ? "Creating account..." : "Create Account"}
           </button>
         </form>
 
-        <p className="text-xs text-center text-slate-500 mt-6">
+        <p className="text-xs text-center mt-6">
           Already have an account?{" "}
           <span
+            className="text-pink-600 cursor-pointer underline"
             onClick={() => navigate(`/login?role=${role}`)}
-            className="text-pink-600 font-medium hover:underline cursor-pointer"
           >
             Login
           </span>

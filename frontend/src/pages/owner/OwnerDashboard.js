@@ -33,6 +33,8 @@ export default function OwnerDashboard() {
     category: "Uncategorized",
   });
 
+  const [imageFile, setImageFile] = useState(null); // NEW
+
   // order filter (all / paid / pending)
   const [orderFilter, setOrderFilter] = useState("all");
 
@@ -126,38 +128,47 @@ export default function OwnerDashboard() {
         return;
       }
 
+      const formData = new FormData();
+
+      if (!editProduct._id) {
+        formData.append("bakeryId", bakery._id);
+      }
+
+      formData.append("name", editProduct.name);
+      formData.append("description", editProduct.description || "");
+      formData.append("price", editProduct.price);
+      formData.append("category", editProduct.category || "Uncategorized");
+      formData.append("isSoldOut", editProduct.isSoldOut ? "true" : "false");
+
+      if (imageFile) {
+        formData.append("image", imageFile);
+      } else if (editProduct.imageUrl) {
+        formData.append("imageUrl", editProduct.imageUrl);
+      }
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      };
+
       if (editProduct._id) {
-        // UPDATE
         await axios.put(
           `http://localhost:5000/api/products/${editProduct._id}`,
-          {
-            name: editProduct.name,
-            description: editProduct.description,
-            price: Number(editProduct.price),
-            imageUrl: editProduct.imageUrl,
-            isSoldOut: editProduct.isSoldOut,
-            category: editProduct.category,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
+          formData,
+          config
         );
       } else {
-        // CREATE
         await axios.post(
           `http://localhost:5000/api/products`,
-          {
-            bakeryId: bakery._id,
-            name: editProduct.name,
-            description: editProduct.description,
-            price: Number(editProduct.price),
-            imageUrl: editProduct.imageUrl,
-            isSoldOut: editProduct.isSoldOut,
-            category: editProduct.category,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
+          formData,
+          config
         );
       }
 
       setShowModal(false);
+      setImageFile(null);
       setEditProduct({
         name: "",
         description: "",
@@ -166,6 +177,7 @@ export default function OwnerDashboard() {
         isSoldOut: false,
         category: "Uncategorized",
       });
+
       loadProducts();
     } catch (err) {
       console.error("Save product error", err);
@@ -446,12 +458,16 @@ export default function OwnerDashboard() {
                   >
                     <img
                       src={
-                        p.imageUrl ||
-                        "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600"
+                        p.imageUrl
+                          ? p.imageUrl.startsWith("http")
+                            ? p.imageUrl
+                            : `http://localhost:5000${p.imageUrl}`
+                          : "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600"
                       }
                       className="w-full h-40 object-cover rounded-xl mb-3"
                       alt={p.name}
                     />
+
                     <div className="flex justify-between items-start gap-2">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">
@@ -938,7 +954,7 @@ export default function OwnerDashboard() {
                 </div>
                 <div>
                   <label className="block text-gray-700 mb-1">Category</label>
-                  <input
+                  <select
                     className="w-full border rounded-lg p-2"
                     value={editProduct.category}
                     onChange={(e) =>
@@ -947,7 +963,15 @@ export default function OwnerDashboard() {
                         category: e.target.value,
                       })
                     }
-                  />
+                  >
+                    <option value="Cakes">Cakes</option>
+                    <option value="Pastries">Pastries</option>
+                    <option value="Breads">Breads</option>
+                    <option value="Cookies">Cookies</option>
+                    <option value="Snacks">Snacks</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Uncategorized">Uncategorized</option>
+                  </select>
                 </div>
               </div>
 
@@ -964,6 +988,41 @@ export default function OwnerDashboard() {
                   }
                 />
               </div>
+
+              {/* ✅ NEW UPLOAD IMAGE FIELD ADDED WITHOUT CHANGING ANYTHING */}
+              <div className="mt-2">
+                <label className="block text-gray-700 mb-1">Upload Image</label>
+
+                {/* Preview new selected image */}
+                {imageFile ? (
+                  <img
+                    src={URL.createObjectURL(imageFile)}
+                    alt="Preview"
+                    className="w-full h-32 object-cover rounded-lg mb-2 border"
+                  />
+                ) : editProduct.imageUrl ? (
+                  <img
+                    src={
+                      editProduct.imageUrl.startsWith("http")
+                        ? editProduct.imageUrl
+                        : `http://localhost:5000${editProduct.imageUrl}`
+                    }
+                    alt="Existing"
+                    className="w-full h-32 object-cover rounded-lg mb-2 border"
+                  />
+                ) : null}
+
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  className="w-full border rounded-lg p-2"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setImageFile(file);
+                  }}
+                />
+              </div>
+              {/* END UPLOAD FIELD */}
 
               <label className="inline-flex items-center gap-2 mt-2 text-sm">
                 <input

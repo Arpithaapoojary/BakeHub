@@ -4,6 +4,8 @@ import User from "../models/user.model.js";
 import PasswordResetToken from "../models/passwordResetToken.model.js";
 import { sendMail } from "../utils/mailer.js";
 import Bakery from "../models/bakery.model.js";
+import EmailOtp from "../models/emailOtp.model.js";
+
 
 // ------------------ REGISTER CUSTOMER ------------------
 export const registerCustomer = async (req, res) => {
@@ -17,6 +19,14 @@ export const registerCustomer = async (req, res) => {
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ error: "Email already exists" });
 
+        const otpRecord = await EmailOtp.findOne({ email });
+    if (!otpRecord || !otpRecord.isVerified || otpRecord.expiresAt < new Date()) {
+      return res
+        .status(400)
+        .json({ error: "Please verify your email with OTP before registering." });
+    }
+
+
     const user = await User.create({
       name,
       email,
@@ -24,6 +34,9 @@ export const registerCustomer = async (req, res) => {
       phone,
       role: "customer",
     });
+
+        await EmailOtp.deleteOne({ email });
+
 
     res.json({ message: "Customer registered successfully", user });
   } catch (err) {
@@ -39,6 +52,14 @@ export const registerOwner = async (req, res) => {
 
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ error: "Email already exists" });
+
+        const otpRecord = await EmailOtp.findOne({ email });
+    if (!otpRecord || !otpRecord.isVerified || otpRecord.expiresAt < new Date()) {
+      return res
+        .status(400)
+        .json({ error: "Please verify your email with OTP before registering." });
+    }
+
 
     // Create owner user with phone
     const user = await User.create({
@@ -57,6 +78,9 @@ export const registerOwner = async (req, res) => {
       ownerId: user._id,
       status: "pending",
     });
+
+        await EmailOtp.deleteOne({ email });
+
 
     res.json({
       message: "Owner registered successfully. Bakery pending approval.",
@@ -143,6 +167,80 @@ export const login = async (req, res) => {
   }
 };
 
+// ------------------ SEND REGISTER OTP ------------------
+export const sendRegisterOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email is required" });
+
+    // If user already exists, no OTP
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 5); // 5 minutes
+
+    await EmailOtp.findOneAndUpdate(
+      { email },
+      { otpHash, expiresAt, isVerified: false },
+      { upsert: true, new: true }
+    );
+
+    const html = `
+      <p>Your BakeHub email verification code is:</p>
+      <h2>${otp}</h2>
+      <p>This code will expire in 5 minutes.</p>
+    `;
+
+    await sendMail({
+      to: email,
+      subject: "BakeHub — Email verification code",
+      html,
+    });
+
+    res.json({ message: "OTP sent to your email." });
+  } catch (err) {
+    console.error("sendRegisterOtp:", err);
+    res.status(500).json({ error: "Failed to send OTP" });
+  }
+};
+
+// ------------------ VERIFY REGISTER OTP ------------------
+export const verifyRegisterOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ error: "Email and OTP are required" });
+    }
+
+    const record = await EmailOtp.findOne({ email });
+    if (!record) {
+      return res
+        .status(400)
+        .json({ error: "OTP not found. Please request a new one." });
+    }
+
+    if (record.expiresAt < new Date()) {
+      return res.status(400).json({ error: "OTP expired. Please request again." });
+    }
+
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+    if (otpHash !== record.otpHash) {
+      return res.status(400).json({ error: "Invalid OTP" });
+    }
+
+    record.isVerified = true;
+    await record.save();
+
+    res.json({ message: "OTP verified successfully.", verified: true });
+  } catch (err) {
+    console.error("verifyRegisterOtp:", err);
+    res.status(500).json({ error: "Failed to verify OTP" });
+  }
+};
 
 
 // ------------------ FORGOT PASSWORD ------------------
@@ -225,5 +323,28 @@ export const getAllUsers = async (req, res) => {
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+
+export const checkEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    return res.json({ exists: !!user });
+  } catch (error) {
+    return res.status(500).json({ error: "Server error while checking email" });
+  }
+};
+
+export const checkPhone = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const user = await User.findOne({ phone });
+
+    return res.json({ exists: !!user });
+  } catch (error) {
+    return res.status(500).json({ error: "Server error while checking phone" });
   }
 };

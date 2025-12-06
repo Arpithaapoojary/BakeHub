@@ -6,19 +6,32 @@ import {
   updateProduct,
   deleteProduct,
 } from "../controllers/product.controller.js";
+import { upload } from "../middleware/upload.js";
 
 const router = express.Router();
 
-// 🧁 Owner Only: Create Product
-router.post("/", requireAuth, allowRoles("owner"), createProduct);
+// 🧁 Create Product (with image upload)
+router.post(
+  "/",
+  requireAuth,
+  allowRoles("owner"),
+  upload.single("image"),
+  createProduct
+);
 
-// 🍰 Get Products for a Bakery (Public)
+// 🍰 Get All Products from Bakery
 router.get("/:bakeryId", getProductsByBakery);
 
-// ✏️ Owner: Update Product
-router.put("/:id", requireAuth, allowRoles("owner"), updateProduct);
+// ✏️ Update Product (also supports replacing image)
+router.put(
+  "/:id",
+  requireAuth,
+  allowRoles("owner"),
+  upload.single("image"),
+  updateProduct
+);
 
-// ❌ Owner: Delete Product
+// ❌ Delete Product
 router.delete("/:id", requireAuth, allowRoles("owner"), deleteProduct);
 
 export default router;

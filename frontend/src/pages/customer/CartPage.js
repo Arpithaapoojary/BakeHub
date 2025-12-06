@@ -50,14 +50,15 @@ export default function CartPage() {
               className="bg-white p-5 rounded-2xl shadow-lg border border-pink-100 flex gap-5 hover:shadow-xl hover:-translate-y-1 transition transform animate-slideUp"
               style={{ animationDelay: `${index * 0.05}s` }}
             >
-              {/* IMAGE */}
               <img
                 src={
-                  item.imageUrl ||
-                  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800"
+                  item.imageUrl
+                    ? item.imageUrl.startsWith("http")
+                      ? item.imageUrl
+                      : `http://localhost:5000${item.imageUrl}`
+                    : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800"
                 }
-                alt={item.name}
-                className="w-28 h-28 rounded-xl object-cover border shadow-sm hover:scale-105 transition"
+                className="w-24 h-24 object-cover rounded-xl border shadow-sm"
               />
 
               {/* DETAILS */}

@@ -12,14 +12,15 @@ import orderRoutes from "./routes/order.routes.js";
 import menuRoutes from "./routes/menu.routes.js";
 import bakeryRoutes from "./routes/bakery.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
-
 import userRoutes from "./routes/user.routes.js";
-
 import messageRoutes from "./routes/message.routes.js";
+
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 
-// 🔥 Allow frontend (React) to connect
+// Allow frontend to connect
 app.use(
   cors({
     origin: ["http://localhost:3000", "http://localhost:5173"],
@@ -57,15 +58,21 @@ app.get("/api/health", (_req, res) =>
   res.json({ ok: true, service: "BakeHub API" })
 );
 
-// 🔥 Register all routes
+// File path utilities
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Static folder for uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "./public/uploads")));
+
+// Register all routes
+app.use("/uploads", express.static("public/uploads"));
 app.use("/api/auth", authRoutes);
 app.use("/api/bakeries", bakeryRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
-
 app.use("/api/users", userRoutes);
-
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/messages", messageRoutes);
 
