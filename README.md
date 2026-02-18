@@ -64,7 +64,6 @@ BakeHub/
 │
 ├── frontend/        # Client-side application
 ├── backend/         # Server-side application and APIs
-├── screenshots/     # Application preview images
 └── README.md
 ```
 
