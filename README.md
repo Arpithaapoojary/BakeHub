@@ -108,8 +108,3 @@ The application will run locally on the configured development ports.
 
 ---
 
-## Author
-
-Arpitha Poojary  
-Master of Computer Applications (MCA)  
-Aspiring Software Developer
