@@ -18,7 +18,7 @@ This project was built to strengthen practical knowledge in full-stack web devel
 - HTML
 - CSS
 - JavaScript
-- React.js (if applicable)
+- React.js
 
 ### Backend
 - Node.js
