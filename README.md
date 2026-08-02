@@ -2,7 +2,7 @@
 
 <img src="https://img.shields.io/badge/BakeHub-Bakery%20Marketplace-e07b54?style=for-the-badge&logo=react" alt="BakeHub" />
 
-# 🍰 BakeHub
+# BakeHub
 
 ### *Your Neighborhood Bakery Marketplace*
 
@@ -18,51 +18,51 @@ A full-stack web application that connects local bakery owners with customers �
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 
-- [✨ Features](#-features)
-- [🛠️ Tech Stack](#️-tech-stack)
-- [📁 Project Structure](#-project-structure)
-- [⚙️ Getting Started](#️-getting-started)
-- [🔐 Environment Variables](#-environment-variables)
-- [👥 User Roles](#-user-roles)
-- [🗺️ API Endpoints](#️-api-endpoints)
-- [📸 Screenshots](#-screenshots)
-- [🚀 Deployment](#-deployment)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
-
----
-
-## ✨ Features
-
-### 👤 Customer
-- 📍 Browse nearby approved bakeries
-- 🛒 Add items to cart (single-bakery enforcement)
-- 💳 Checkout with payment popup
-- 📦 Track orders in real-time with status updates
-- 🧾 Download PDF invoice for any order
-- 🔑 OTP-verified registration & secure login
-- 🔁 Forgot/reset password via email link
-
-### 🏪 Bakery Owner
-- 📝 Register with bakery details (pending admin approval)
-- 📋 Manage full menu (add, edit, delete items)
-- 🖼️ Upload bakery images (Cloudinary-powered)
-- 📊 Dashboard with order analytics & charts
-- 📬 Receive and track customer orders
-- ⚙️ Update bakery profile and settings
-
-### 🛡️ Admin
-- ✅ Approve or reject bakery registrations
-- 👥 View and manage all users
-- 📊 Platform-wide analytics dashboard
-- 📨 Read & reply to customer contact messages
-- 🔒 Secure admin-only routes
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [User Roles](#user-roles)
+- [API Endpoints](#api-endpoints)
+- [Screenshots](#screenshots)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🛠️ Tech Stack
+## Features
+
+### Customer
+- Browse nearby approved bakeries
+- Add items to cart (single-bakery enforcement)
+- Checkout with payment popup
+- Track orders in real-time with status updates
+- Download PDF invoice for any order
+- OTP-verified registration and secure login
+- Forgot / reset password via email link
+
+### Bakery Owner
+- Register with bakery details (pending admin approval)
+- Manage full menu (add, edit, delete items)
+- Upload bakery images (Cloudinary-powered)
+- Dashboard with order analytics and charts
+- Receive and track customer orders
+- Update bakery profile and settings
+
+### Admin
+- Approve or reject bakery registrations
+- View and manage all users
+- Platform-wide analytics dashboard
+- Read and reply to customer contact messages
+- Secure admin-only routes
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -79,7 +79,7 @@ A full-stack web application that connects local bakery owners with customers �
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 BakeHub/
@@ -120,7 +120,7 @@ BakeHub/
 
 ---
 
-## ⚙️ Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -143,7 +143,7 @@ cd backend
 npm install
 ```
 
-Create a `.env` file in the `backend/` folder (see [Environment Variables](#-environment-variables)):
+Create a `.env` file in the `backend/` folder (see [Environment Variables](#environment-variables)):
 
 ```bash
 npm run dev        # Development (nodemon)
@@ -172,7 +172,7 @@ Frontend runs at: **http://localhost:3000**
 
 ---
 
-## 🔐 Environment Variables
+## Environment Variables
 
 ### `backend/.env`
 
@@ -210,16 +210,16 @@ CLOUDINARY_API_SECRET=your_api_secret
 REACT_APP_API=http://localhost:5000/api
 ```
 
-> ⚠️ **Never commit `.env` files** — they are listed in `.gitignore`.
+> **Note:** Never commit `.env` files — they are listed in `.gitignore`.
 
 ---
 
-## 👥 User Roles
+## User Roles
 
 | Role | Access | Registration |
 |---|---|---|
-| **Customer** | Browse bakeries, place & track orders | Public signup (OTP verified) |
-| **Owner** | Manage menu & orders, view analytics | Public signup → Admin approval |
+| **Customer** | Browse bakeries, place and track orders | Public signup (OTP verified) |
+| **Owner** | Manage menu and orders, view analytics | Public signup — Admin approval required |
 | **Admin** | Full platform management | Created via API (see below) |
 
 ### Creating the First Admin
@@ -236,7 +236,7 @@ Then log in at `/login` with the **Admin** role selected.
 
 ---
 
-## 🗺️ API Endpoints
+## API Endpoints
 
 ### Auth — `/api/auth`
 | Method | Endpoint | Description |
@@ -279,13 +279,13 @@ Then log in at `/login` with the **Admin** role selected.
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
-> _Coming soon — add screenshots of your UI here._
+> Coming soon — add screenshots of your UI here.
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
 ### Backend (e.g., Render / Railway)
 1. Set all environment variables in the platform dashboard
@@ -299,9 +299,9 @@ Then log in at `/login` with the **Admin** role selected.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions are welcome. Please follow these steps:
 
 1. Fork the repository
 2. Create your feature branch: `git checkout -b feature/your-feature`
@@ -311,12 +311,12 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License**.
 
 ---
 
 <div align="center">
-  Made with ❤️ by <a href="https://github.com/Arpithaapoojary">Arpitha Poojary</a>
+  Made by <a href="https://github.com/Arpithaapoojary">Arpitha Poojary</a>
 </div>
