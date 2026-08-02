@@ -87,7 +87,7 @@ export const uploadBakeryImage = async (req, res) => {
     const bakery = await Bakery.findOne({ ownerId: req.user.id });
     if (!bakery) return res.status(404).json({ error: "Bakery not found" });
 
-    bakery.imageUrl = `/uploads/${req.file.filename}`;
+    bakery.imageUrl = req.file.path; // Cloudinary URL
     await bakery.save();
 
     res.json({ success: true, imageUrl: bakery.imageUrl });

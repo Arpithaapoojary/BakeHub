@@ -10,7 +10,7 @@ import {
 } from "../controllers/bakery.controller.js";
 
 import { uploadBakeryImage } from "../controllers/bakery.controller.js";
-import { upload } from "../middleware/upload.js";
+import { upload, uploadToCloudinary } from "../middleware/upload.js";
 
 
 
@@ -25,6 +25,7 @@ router.put(
   requireAuth,
   allowRoles("owner"),
   upload.single("image"),
+  uploadToCloudinary,
   uploadBakeryImage
 );
 

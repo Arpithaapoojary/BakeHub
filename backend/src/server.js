@@ -20,10 +20,21 @@ import { fileURLToPath } from "url";
 
 const app = express();
 
-// Allow frontend to connect
+// Allow frontend to connect — reads from CORS_ORIGIN in production
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+  : ["http://localhost:3000", "http://localhost:5173"];
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:5173"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. Postman, mobile apps)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked: ${origin}`));
+      }
+    },
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -76,11 +87,32 @@ app.use("/api/users", userRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/messages", messageRoutes);
 
+// ─── Global Express Error Handler ───────────────────────────────────────────
+// Catches any error passed via next(err) or thrown in async middleware
+app.use((err, req, res, _next) => {
+  console.error("[Global Error]", err.message);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({ error: err.message || "Internal server error" });
+});
+
+// ─── Process-Level Crash Guards ──────────────────────────────────────────────
+// Prevent the Node process from dying on unhandled promise rejections
+process.on("unhandledRejection", (reason) => {
+  console.error("[unhandledRejection]", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("[uncaughtException]", err.message);
+  // Give the server 1s to finish in-flight requests before exiting
+  setTimeout(() => process.exit(1), 1000);
+});
+
 // 🚀 Start server
 const start = async () => {
   await connectDB();
-  app.listen(process.env.PORT || 5000, () =>
-    console.log(`🚀 Server running at http://localhost:${process.env.PORT}`)
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () =>
+    console.log(`🚀 Server running at http://localhost:${PORT}`)
   );
 };
 

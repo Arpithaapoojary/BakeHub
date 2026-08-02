@@ -47,7 +47,7 @@ export default function Register() {
     try {
       const res = await axios.post(
         "http://localhost:5000/api/auth/check-email",
-        { email }
+        { email },
       );
       return res.data.exists;
     } catch {
@@ -59,7 +59,7 @@ export default function Register() {
     try {
       const res = await axios.post(
         "http://localhost:5000/api/auth/check-phone",
-        { phone }
+        { phone },
       );
       return res.data.exists;
     } catch {
@@ -84,7 +84,7 @@ export default function Register() {
 
       const res = await axios.post(
         "http://localhost:5000/api/auth/send-register-otp",
-        { email }
+        { email },
       );
 
       setOtpSent(true);
@@ -113,7 +113,7 @@ export default function Register() {
 
       const res = await axios.post(
         "http://localhost:5000/api/auth/verify-register-otp",
-        { email, otp }
+        { email, otp },
       );
 
       if (res.data.verified) {
@@ -306,6 +306,7 @@ export default function Register() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="9876543210"
+              maxLength={10}
             />
             {errors.phone && (
               <p className="text-xs text-red-600">{errors.phone}</p>

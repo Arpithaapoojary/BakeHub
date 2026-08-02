@@ -63,7 +63,7 @@ export default function CheckoutPage() {
         },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+        },
       );
 
       clearCart();
@@ -95,7 +95,7 @@ export default function CheckoutPage() {
         },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+        },
       );
 
       clearCart();
@@ -108,20 +108,19 @@ export default function CheckoutPage() {
   // -----------------------
   // PLACE ORDER HANDLER
   // -----------------------
- const handlePlaceOrder = () => {
-  // Validate FIRST
-  if (!validate()) return;
+  const handlePlaceOrder = () => {
+    // Validate FIRST
+    if (!validate()) return;
 
-  // Then choose method
-  if (paymentMethod === "online") {
-    setShowPayment(true);
-    return;
-  }
+    // Then choose method
+    if (paymentMethod === "online") {
+      setShowPayment(true);
+      return;
+    }
 
-  // Otherwise COD
-  placeCOD();
-};
-
+    // Otherwise COD
+    placeCOD();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white py-10 px-4 animate-fadeIn">
@@ -236,7 +235,7 @@ export default function CheckoutPage() {
                 />
                 <span className="flex items-center gap-2">
                   <CreditCard className="text-pink-600" />
-                  Fake Online Payment
+                  Online Payment
                 </span>
               </label>
             </div>

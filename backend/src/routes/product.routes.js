@@ -6,7 +6,7 @@ import {
   updateProduct,
   deleteProduct,
 } from "../controllers/product.controller.js";
-import { upload } from "../middleware/upload.js";
+import { upload, uploadToCloudinary } from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -16,6 +16,7 @@ router.post(
   requireAuth,
   allowRoles("owner"),
   upload.single("image"),
+  uploadToCloudinary,
   createProduct
 );
 
@@ -28,6 +29,7 @@ router.put(
   requireAuth,
   allowRoles("owner"),
   upload.single("image"),
+  uploadToCloudinary,
   updateProduct
 );
 

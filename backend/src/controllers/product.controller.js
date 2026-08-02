@@ -13,8 +13,9 @@ export const createProduct = async (req, res) => {
       imageUrl,
     } = req.body;
 
+    // Cloudinary returns the full URL in req.file.path
     const finalImageUrl = req.file
-      ? `/uploads/${req.file.filename}`
+      ? req.file.path
       : imageUrl || "";
 
     const product = await Product.create({
@@ -61,7 +62,7 @@ export const updateProduct = async (req, res) => {
     };
 
     if (req.file) {
-      updates.imageUrl = `/uploads/${req.file.filename}`;
+      updates.imageUrl = req.file.path; // Cloudinary URL
     } else if (imageUrl !== undefined) {
       updates.imageUrl = imageUrl;
     }
