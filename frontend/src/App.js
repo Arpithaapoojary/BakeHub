@@ -35,10 +35,12 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import MyProfile from "./pages/common/MyProfile";
 
 import { CartProvider } from "./context/CartContext";
+import AuthProvider from "./context/AuthContext";
 
 export default function App() {
   return (
     <CartProvider>
+      <AuthProvider>
       <Router>
         <div className="font-[Poppins] bg-[#FFF5FA] min-h-screen flex flex-col">
           <Header />
@@ -95,6 +97,7 @@ export default function App() {
           <Footer />
         </div>
       </Router>
+          </AuthProvider>
     </CartProvider>
   );
 }
