@@ -32,3 +32,5 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 export default mongoose.model("User", userSchema);
 
 // End of Mongoose User schema
+
+// End of Mongoose User schema
