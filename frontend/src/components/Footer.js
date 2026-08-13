@@ -21,13 +21,13 @@ export default function Footer() {
 
           {/* SOCIAL ICONS */}
           <div className="flex gap-4 mt-5">
-            <a href="#" className="hover:text-yellow-200 transition">
+            <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="hover:text-yellow-200 transition">
               <Instagram size={20} />
             </a>
-            <a href="#" className="hover:text-yellow-200 transition">
+            <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" className="hover:text-yellow-200 transition">
               <Facebook size={20} />
             </a>
-            <a href="#" className="hover:text-yellow-200 transition">
+            <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter" className="hover:text-yellow-200 transition">
               <Twitter size={20} />
             </a>
           </div>

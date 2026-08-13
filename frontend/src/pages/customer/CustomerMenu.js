@@ -111,6 +111,7 @@ export default function CustomerMenu() {
                 : `${BACKEND_URL}${bakery.imageUrl}`
               : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000"
           }
+          alt={bakery?.name || "Bakery header image"}
           className="w-full h-full object-cover"
         />
 

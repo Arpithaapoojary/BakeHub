@@ -9,9 +9,7 @@ import {
   PlusCircle,
   Edit3,
   Trash2,
-  CheckCircle,
   Clock,
-  XCircle,
 } from "lucide-react";
 import { API_URL, BACKEND_URL } from "../../lib/api";
 
@@ -601,12 +599,6 @@ export default function OwnerDashboard() {
             ) : (
               <div className="space-y-4">
                 {filteredOrders.map((o) => {
-                  const isPaid = o.paymentStatus === "paid";
-                  const amount =
-                    typeof o.paidAmount === "number" && !isNaN(o.paidAmount)
-                      ? o.paidAmount
-                      : o.total || 0;
-
                   return (
                     <div
                       key={o._id}

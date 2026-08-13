@@ -8,11 +8,9 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Search as SearchIcon,
   User,
   ChevronLeft,
   ChevronRight,
-  Activity,
 } from "lucide-react";
 
 import {
@@ -25,7 +23,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   LineChart,
   Line,
   CartesianGrid,
