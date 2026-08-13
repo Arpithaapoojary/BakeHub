@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { User, Phone, Lock } from "lucide-react";
+import { API_URL } from "../../lib/api";
 
 export default function OwnerSettings() {
   const [name, setName] = useState("");
@@ -11,7 +12,7 @@ export default function OwnerSettings() {
   // Load owner data
   useEffect(() => {
     async function loadData() {
-      const res = await fetch("http://localhost:5000/api/users/me", {
+      const res = await fetch(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -28,7 +29,7 @@ export default function OwnerSettings() {
       return alert("Name and phone cannot be empty");
     }
 
-    const res = await fetch("http://localhost:5000/api/users/update-profile", {
+    const res = await fetch(`${API_URL}/users/update-profile`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -53,7 +54,7 @@ export default function OwnerSettings() {
     const oldPassword = prompt("Enter your old password:");
     if (!oldPassword) return;
 
-    const res = await fetch("http://localhost:5000/api/users/change-password", {
+    const res = await fetch(`${API_URL}/users/change-password`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

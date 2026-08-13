@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../lib/api";
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -34,7 +34,7 @@ export default function Contact() {
 
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/messages", form);
+      await api.post("/messages", form);
 
       setSuccessMsg("Your message has been sent successfully! Our team will get back to you.");
       setForm({

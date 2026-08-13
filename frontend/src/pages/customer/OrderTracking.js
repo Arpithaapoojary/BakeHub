@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { Clock, CheckCircle, Truck } from "lucide-react";
+import { API_URL } from "../../lib/api";
 
 export default function OrderTracking() {
   // IMPORTANT: this must match the route: /track/:orderId
@@ -19,7 +20,7 @@ export default function OrderTracking() {
     const loadOrder = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/orders/${orderId}`,
+          `${API_URL}/orders/${orderId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

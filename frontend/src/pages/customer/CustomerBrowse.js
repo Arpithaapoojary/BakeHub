@@ -3,6 +3,7 @@ import axios from "axios";
 import { MapPin, Star, Search, LocateFixed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { API_URL, BACKEND_URL } from "../../lib/api";
 
 export default function CustomerBrowse() {
   const [bakeries, setBakeries] = useState([]);
@@ -23,7 +24,7 @@ export default function CustomerBrowse() {
     const fetchBakeries = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/bakeries/public"
+          `${API_URL}/bakeries/public`
         );
         setBakeries(res.data || []);
       } catch (err) {
@@ -291,7 +292,7 @@ export default function CustomerBrowse() {
     b.imageUrl
       ? b.imageUrl.startsWith("http")
         ? b.imageUrl
-        : `http://localhost:5000${b.imageUrl}`
+        : `${BACKEND_URL}${b.imageUrl}`
       : "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe"
   }
   alt={b.name}

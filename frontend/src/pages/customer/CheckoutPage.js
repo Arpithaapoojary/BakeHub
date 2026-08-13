@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../lib/api";
 
 import { MapPin, Phone, CreditCard, Wallet, AlertCircle } from "lucide-react";
 
@@ -47,7 +48,7 @@ export default function CheckoutPage() {
   const placeCOD = async () => {
     try {
       await axios.post(
-        "http://localhost:5000/api/orders",
+        `${API_URL}/orders`,
         {
           items: cart.map((i) => ({
             ...i,
@@ -79,7 +80,7 @@ export default function CheckoutPage() {
   const placeOnlineOrder = async () => {
     try {
       await axios.post(
-        "http://localhost:5000/api/orders",
+        `${API_URL}/orders`,
         {
           items: cart.map((i) => ({
             ...i,

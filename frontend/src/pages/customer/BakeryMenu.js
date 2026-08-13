@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { Star, MapPin } from "lucide-react";
+import { API_URL } from "../../lib/api";
 
 export default function BakeryMenu() {
   const { id } = useParams(); // Bakery ID from URL
@@ -11,10 +12,10 @@ export default function BakeryMenu() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/bakeries/${id}`);
+        const res = await axios.get(`${API_URL}/bakeries/${id}`);
         setBakery(res.data);
         const menuRes = await axios.get(
-          `http://localhost:5000/api/menus/${id}`
+          `${API_URL}/menus/${id}`
         );
         setMenu(menuRes.data);
       } catch (error) {

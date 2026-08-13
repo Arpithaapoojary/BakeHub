@@ -1,5 +1,3 @@
-// FIXED MyOrders.js
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -8,9 +6,9 @@ import {
   Truck,
   Package,
   ChevronRight,
-  RefreshCcw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../lib/api";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
@@ -22,7 +20,7 @@ export default function MyOrders() {
     const fetchOrders = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/orders/my-orders",
+          `${API_URL}/orders/my-orders`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

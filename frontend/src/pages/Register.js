@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { API_URL } from "../lib/api";
 
 export default function Register() {
   const location = useLocation();
@@ -46,7 +47,7 @@ export default function Register() {
   const checkExistingEmail = async (email) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/check-email",
+        `${API_URL}/auth/check-email`,
         { email },
       );
       return res.data.exists;
@@ -58,7 +59,7 @@ export default function Register() {
   const checkExistingPhone = async (phone) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/check-phone",
+        `${API_URL}/auth/check-phone`,
         { phone },
       );
       return res.data.exists;
@@ -83,7 +84,7 @@ export default function Register() {
       setOtpSending(true);
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/send-register-otp",
+        `${API_URL}/auth/send-register-otp`,
         { email },
       );
 
@@ -112,7 +113,7 @@ export default function Register() {
       setOtpVerifying(true);
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/verify-register-otp",
+        `${API_URL}/auth/verify-register-otp`,
         { email, otp },
       );
 
@@ -188,8 +189,8 @@ export default function Register() {
 
       const endpoint =
         role === "customer"
-          ? "http://localhost:5000/api/auth/register-customer"
-          : "http://localhost:5000/api/auth/register-owner";
+          ? `${API_URL}/auth/register-customer`
+          : `${API_URL}/auth/register-owner`;
 
       await axios.post(endpoint, payload);
 

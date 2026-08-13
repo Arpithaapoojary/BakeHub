@@ -13,6 +13,7 @@ import {
   Clock,
   XCircle,
 } from "lucide-react";
+import { API_URL, BACKEND_URL } from "../../lib/api";
 
 export default function OwnerDashboard() {
   const token = localStorage.getItem("token");
@@ -67,7 +68,7 @@ export default function OwnerDashboard() {
   // -------------------------------------------------------------------
   const loadBakery = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/bakeries/mine", {
+      const res = await axios.get(`${API_URL}/bakeries/mine`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBakery(res.data);
@@ -83,7 +84,7 @@ export default function OwnerDashboard() {
     if (!bakery?._id) return;
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/products/${bakery._id}`
+        `${API_URL}/products/${bakery._id}`
       );
       setProducts(res.data || []);
     } catch (err) {
@@ -97,7 +98,7 @@ export default function OwnerDashboard() {
   const loadOrders = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/orders/owner-orders",
+        `${API_URL}/orders/owner-orders`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setOrders(res.data || []);
@@ -155,13 +156,13 @@ export default function OwnerDashboard() {
 
       if (editProduct._id) {
         await axios.put(
-          `http://localhost:5000/api/products/${editProduct._id}`,
+          `${API_URL}/products/${editProduct._id}`,
           formData,
           config
         );
       } else {
         await axios.post(
-          `http://localhost:5000/api/products`,
+          `${API_URL}/products`,
           formData,
           config
         );
@@ -191,7 +192,7 @@ export default function OwnerDashboard() {
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/products/${id}`, {
+      await axios.delete(`${API_URL}/products/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       loadProducts();
@@ -206,7 +207,7 @@ export default function OwnerDashboard() {
   const updateOrderStatus = async (id, status) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/orders/status/${id}`,
+        `${API_URL}/orders/status/${id}`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -226,7 +227,7 @@ export default function OwnerDashboard() {
 
     try {
       await axios.put(
-        "http://localhost:5000/api/bakeries/upload-image",
+        `${API_URL}/bakeries/upload-image`,
         formData,
         {
           headers: {
@@ -490,7 +491,7 @@ export default function OwnerDashboard() {
                         p.imageUrl
                           ? p.imageUrl.startsWith("http")
                             ? p.imageUrl
-                            : `http://localhost:5000${p.imageUrl}`
+                            : `${BACKEND_URL}${p.imageUrl}`
                           : "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600"
                       }
                       className="w-full h-40 object-cover rounded-xl mb-3"
@@ -731,7 +732,7 @@ export default function OwnerDashboard() {
                             value={o.paymentStatus}
                             onChange={async (e) => {
                               await axios.put(
-                                `http://localhost:5000/api/orders/update-payment/${o._id}`,
+                                `${API_URL}/orders/update-payment/${o._id}`,
                                 { paymentStatus: e.target.value },
                                 {
                                   headers: { Authorization: `Bearer ${token}` },
@@ -930,7 +931,7 @@ export default function OwnerDashboard() {
                   src={
                     bakery.imageUrl.startsWith("http")
                       ? bakery.imageUrl
-                      : `http://localhost:5000${bakery.imageUrl}`
+                      : `${BACKEND_URL}${bakery.imageUrl}`
                   }
                   alt="Bakery"
                   className="w-full h-48 object-cover rounded-xl border mb-4"
@@ -1058,7 +1059,7 @@ export default function OwnerDashboard() {
                     src={
                       editProduct.imageUrl.startsWith("http")
                         ? editProduct.imageUrl
-                        : `http://localhost:5000${editProduct.imageUrl}`
+                        : `${BACKEND_URL}${editProduct.imageUrl}`
                     }
                     alt="Existing"
                     className="w-full h-32 object-cover rounded-lg mb-2 border"
